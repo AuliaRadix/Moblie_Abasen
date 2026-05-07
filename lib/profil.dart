@@ -1,0 +1,812 @@
+import 'package:flutter/material.dart';
+import 'dashboard.dart';
+import 'list_matakuliah.dart';
+import 'scan_qr.dart';
+
+class ProfilScreen extends StatefulWidget {
+  const ProfilScreen({super.key});
+
+  @override
+  State<ProfilScreen> createState() => _ProfilScreenState();
+}
+
+class _ProfilScreenState extends State<ProfilScreen> {
+  int _currentIndex = 3;
+
+  final Color _maroon = const Color(0xFF800020);
+  final Color _maroonDark = const Color(0xFF5A0016);
+  final Color _maroonLight = const Color(0xFFC0003A);
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF4F6F9),
+      body: Stack(
+        children: [
+          SingleChildScrollView(
+            padding: const EdgeInsets.only(bottom: 90),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                _buildTopHeader(),
+                _buildSummaryStrip(),
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _buildInformasiPribadi(),
+                      const SizedBox(height: 16),
+                      _buildInformasiAkademik(),
+                      const SizedBox(height: 16),
+                      _buildKehadiranSemesterIni(),
+                      const SizedBox(height: 16),
+                      _buildKeamananAkun(),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+      floatingActionButton: Container(
+        height: 68,
+        width: 68,
+        margin: const EdgeInsets.only(top: 30),
+        child: FloatingActionButton(
+          onPressed: () {
+            Navigator.push(context, MaterialPageRoute(builder: (context) => const ScanQrScreen()));
+          },
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          child: Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: LinearGradient(
+                colors: [_maroonDark, _maroonLight],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: _maroon.withOpacity(0.4),
+                  blurRadius: 16,
+                  offset: const Offset(0, 4),
+                )
+              ],
+              border: Border.all(color: Colors.white, width: 4),
+            ),
+            child: const Center(
+              child: Icon(Icons.qr_code_scanner, color: Colors.white, size: 30),
+            ),
+          ),
+        ),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      bottomNavigationBar: _buildBottomNav(),
+    );
+  }
+
+  Widget _buildTopHeader() {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(20, 60, 20, 24),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [_maroonDark, _maroon, _maroonLight],
+        ),
+      ),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Positioned(
+            top: -80,
+            right: -60,
+            child: Container(
+              width: 200,
+              height: 200,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.06),
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: -50,
+            left: -30,
+            child: Container(
+              width: 120,
+              height: 120,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.04),
+                shape: BoxShape.circle,
+              ),
+            ),
+          ),
+          Row(
+            children: [
+              Container(
+                width: 70, height: 70,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFD700),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white.withOpacity(0.4), width: 3),
+                  boxShadow: const [
+                    BoxShadow(color: Colors.black26, blurRadius: 16, offset: Offset(0,4))
+                  ]
+                ),
+                child: Center(
+                  child: Text('AP', style: TextStyle(color: _maroonDark, fontWeight: FontWeight.bold, fontSize: 24)),
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Andi Pratama', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Icon(Icons.credit_card, color: Colors.white.withOpacity(0.75), size: 14),
+                        const SizedBox(width: 4),
+                        Text('NIM: M001', style: TextStyle(color: Colors.white.withOpacity(0.75), fontSize: 12)),
+                      ]
+                    ),
+                    const SizedBox(height: 2),
+                    Row(
+                      children: [
+                        Icon(Icons.business, color: Colors.white.withOpacity(0.7), size: 14),
+                        const SizedBox(width: 4),
+                        Text('Teknik Informatika', style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 12)),
+                      ]
+                    ),
+                  ],
+                ),
+              ),
+              InkWell(
+                onTap: _showEditProfileModal,
+                child: Container(
+                  width: 38, height: 38,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.15),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white.withOpacity(0.35), width: 1.5),
+                  ),
+                  child: const Icon(Icons.edit, color: Colors.white, size: 18),
+                ),
+              ),
+            ],
+          ),
+        ]
+      )
+    );
+  }
+
+  Widget _buildSummaryStrip() {
+    return Container(
+      color: Colors.white,
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            _buildSummaryPill('87%', 'Kehadiran', _maroon),
+            _buildSummaryPill('13', 'Hadir', const Color(0xFF198754)),
+            _buildSummaryPill('1', 'Izin', const Color(0xFFFD7E14)),
+            _buildSummaryPill('2', 'Alpha', const Color(0xFFDC3545)),
+            _buildSummaryPill('14', 'SKS', const Color(0xFF0D6EFD)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSummaryPill(String value, String label, Color color) {
+    return Container(
+      margin: const EdgeInsets.only(right: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF4F6F9),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Column(
+        children: [
+          Text(
+            value,
+            style: TextStyle(
+              color: color,
+              fontWeight: FontWeight.bold,
+              fontSize: 16,
+            ),
+          ),
+          Text(
+            label,
+            style: const TextStyle(
+              color: Colors.grey,
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionCard({
+    required IconData icon,
+    required String title,
+    required Widget child,
+  }) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(14),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(14.0),
+            child: Row(
+              children: [
+                Container(
+                  width: 34, height: 34,
+                  decoration: BoxDecoration(
+                    color: _maroon.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(9),
+                  ),
+                  child: Icon(icon, color: _maroon, size: 18),
+                ),
+                const SizedBox(width: 10),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1A1A2E),
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Divider(height: 1, color: Colors.grey[200]),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: child,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(String label, Widget valueWidget) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 130,
+            child: Text(
+              label,
+              style: const TextStyle(
+                fontSize: 12,
+                color: Colors.grey,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          Expanded(
+            child: valueWidget,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTextValue(String text, {Color? color, FontWeight? fontWeight}) {
+    return Text(
+      text,
+      style: TextStyle(
+        fontSize: 13,
+        color: color ?? const Color(0xFF1A1A2E),
+        fontWeight: fontWeight ?? FontWeight.w500,
+      ),
+    );
+  }
+
+  Widget _buildInformasiPribadi() {
+    return _buildSectionCard(
+      icon: Icons.person,
+      title: 'Informasi Pribadi',
+      child: Column(
+        children: [
+          _buildInfoRow('Nama Lengkap', _buildTextValue('Andi Pratama')),
+          _buildInfoRow('NIM', _buildTextValue('M001')),
+          _buildInfoRow('Email', _buildTextValue('andi@student.ac.id')),
+          _buildInfoRow('No. HP', _buildTextValue('08111111111')),
+          _buildInfoRow('Tanggal Lahir', _buildTextValue('15 Maret 2004')),
+          _buildInfoRow('Jenis Kelamin', _buildTextValue('Laki-laki')),
+          _buildInfoRow('Angkatan', _buildTextValue('2022')),
+          _buildInfoRow('Alamat', _buildTextValue('Jl. Sudirman No. 45, Bandung')),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInformasiAkademik() {
+    return _buildSectionCard(
+      icon: Icons.school,
+      title: 'Informasi Akademik',
+      child: Column(
+        children: [
+          _buildInfoRow('Program Studi', _buildTextValue('Teknik Informatika')),
+          _buildInfoRow('Semester', _buildTextValue('6')),
+          _buildInfoRow('Status Mahasiswa', Align(
+            alignment: Alignment.centerLeft,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              decoration: BoxDecoration(
+                color: const Color(0xFF198754),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: const Text('Aktif', style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
+            ),
+          )),
+          _buildInfoRow('IPK', _buildTextValue('3.75', color: _maroon, fontWeight: FontWeight.bold)),
+          _buildInfoRow('Total SKS Tempuh', _buildTextValue('98 SKS')),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildKehadiranSemesterIni() {
+    final mkList = [
+      {'nama': 'Algoritma & Pemrograman', 'pct': 93, 'color': _maroon},
+      {'nama': 'Basis Data', 'pct': 87, 'color': const Color(0xFF0D6EFD)},
+      {'nama': 'RPL', 'pct': 80, 'color': const Color(0xFF198754)},
+      {'nama': 'Jaringan Komputer', 'pct': 75, 'color': const Color(0xFFFD7E14)},
+      {'nama': 'Sistem Operasi', 'pct': 90, 'color': const Color(0xFF6F42C1)},
+    ];
+
+    return _buildSectionCard(
+      icon: Icons.bar_chart,
+      title: 'Kehadiran Semester Ini',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            children: [
+              SizedBox(
+                width: 110, height: 110,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    CircularProgressIndicator(
+                      value: 0.87,
+                      strokeWidth: 8,
+                      backgroundColor: Colors.grey.shade200,
+                      color: _maroon,
+                      strokeCap: StrokeCap.round,
+                    ),
+                    Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text('87%', style: TextStyle(color: _maroon, fontWeight: FontWeight.bold, fontSize: 22)),
+                          const Text('Hadir', style: TextStyle(color: Colors.grey, fontSize: 10)),
+                        ],
+                      ),
+                    )
+                  ],
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Total Kehadiran', style: TextStyle(color: Colors.grey, fontSize: 12)),
+                    const SizedBox(height: 4),
+                    const Text('87%', style: TextStyle(color: Color(0xFF1A1A2E), fontWeight: FontWeight.bold, fontSize: 24)),
+                    const SizedBox(height: 4),
+                    const Text('13 / 16 pertemuan hadir', style: TextStyle(color: Colors.grey, fontSize: 11)),
+                    const SizedBox(height: 8),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 4,
+                      children: [
+                        _buildStatBadge('Hadir: 13', const Color(0xFF198754)),
+                        _buildStatBadge('Izin: 1', const Color(0xFFFD7E14)),
+                        _buildStatBadge('Alpha: 2', const Color(0xFFDC3545)),
+                      ],
+                    )
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Divider(height: 1, color: Colors.grey[200]),
+          const SizedBox(height: 16),
+          ...mkList.map((mk) {
+            String nama = mk['nama'] as String;
+            int pctInt = mk['pct'] as int;
+            double pct = pctInt / 100.0;
+            Color color = mk['color'] as Color;
+
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(nama, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12, color: Color(0xFF333333))),
+                      Text('$pctInt%', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: color)),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  LinearProgressIndicator(
+                    value: pct,
+                    backgroundColor: Colors.grey.shade200,
+                    color: color,
+                    minHeight: 7,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ],
+              ),
+            );
+          }).toList(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatBadge(String text, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(text, style: TextStyle(color: color, fontSize: 10)),
+    );
+  }
+
+  Widget _buildKeamananAkun() {
+    return _buildSectionCard(
+      icon: Icons.security,
+      title: 'Keamanan Akun',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Kelola keamanan dan kata sandi akun Anda.', style: TextStyle(color: Colors.grey, fontSize: 12)),
+          const SizedBox(height: 12),
+          OutlinedButton.icon(
+            onPressed: _showChangePasswordModal,
+            icon: const Icon(Icons.vpn_key, size: 16),
+            label: const Text('Ganti Password'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: Colors.grey.shade700,
+              side: BorderSide(color: Colors.grey.shade400),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            ),
+          )
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBottomNav() {
+    return BottomAppBar(
+      shape: const CircularNotchedRectangle(),
+      notchMargin: 8.0,
+      color: Colors.white,
+      child: SizedBox(
+        height: 65,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
+            _buildNavItem(Icons.home, 'Beranda', 0),
+            _buildNavItem(Icons.menu_book, 'Mata Kuliah', 1),
+            const SizedBox(width: 48),
+            _buildNavItem(Icons.description, 'Izin', 2),
+            _buildNavItem(Icons.person, 'Profil', 3),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildNavItem(IconData icon, String label, int index) {
+    bool isActive = _currentIndex == index;
+    return InkWell(
+      onTap: () {
+        if (_currentIndex == index) return;
+        Widget? targetPage;
+        if (index == 0) targetPage = const DashboardScreen();
+        if (index == 1) targetPage = const ListMatakuliahScreen();
+        if (index == 3) targetPage = const ProfilScreen();
+        
+        if (targetPage != null) {
+          Navigator.pushReplacement(
+            context,
+            PageRouteBuilder(
+              pageBuilder: (_, __, ___) => targetPage!,
+              transitionDuration: Duration.zero,
+            ),
+          );
+        } else {
+          setState(() {
+            _currentIndex = index;
+          });
+        }
+      },
+      borderRadius: BorderRadius.circular(10),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              icon,
+              color: isActive ? _maroon : Colors.grey,
+              size: 24,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                color: isActive ? _maroon : Colors.grey,
+                fontSize: 10,
+                fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Container(
+              width: 4,
+              height: 4,
+              decoration: BoxDecoration(
+                color: isActive ? _maroon : Colors.transparent,
+                shape: BoxShape.circle,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTextField(String label, String initialValue, {int maxLines = 1, bool isPassword = false}) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Color(0xFF444444))),
+        const SizedBox(height: 8),
+        TextFormField(
+          initialValue: initialValue,
+          obscureText: isPassword,
+          maxLines: maxLines,
+          decoration: InputDecoration(
+            contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: Color(0xFFE0E0E0), width: 1.5),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: const BorderSide(color: Color(0xFFE0E0E0), width: 1.5),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(8),
+              borderSide: BorderSide(color: _maroon, width: 2),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  void _showEditProfileModal() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          contentPadding: EdgeInsets.zero,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          content: SizedBox(
+            width: MediaQuery.of(context).size.width * 0.9,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [_maroonDark, _maroon],
+                    ),
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Row(
+                        children: [
+                          Icon(Icons.edit, color: Colors.white, size: 20),
+                          SizedBox(width: 8),
+                          Text('Edit Profil', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                        ]
+                      ),
+                      InkWell(
+                        onTap: () => Navigator.pop(context),
+                        child: const Icon(Icons.close, color: Colors.white, size: 20),
+                      )
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildTextField('Nama Lengkap', 'Andi Pratama'),
+                      const SizedBox(height: 12),
+                      _buildTextField('Email', 'andi@student.ac.id'),
+                      const SizedBox(height: 12),
+                      _buildTextField('No. HP', '08111111111'),
+                      const SizedBox(height: 12),
+                      _buildTextField('Alamat', 'Jl. Sudirman No. 45, Bandung', maxLines: 3),
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text('Batal', style: TextStyle(color: Colors.grey)),
+                      ),
+                      const SizedBox(width: 8),
+                      ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Profil berhasil diperbarui!'),
+                              backgroundColor: Colors.green,
+                              behavior: SnackBarBehavior.floating,
+                            )
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _maroon,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
+                        child: const Row(
+                          children: [
+                            Icon(Icons.save, size: 16, color: Colors.white),
+                            SizedBox(width: 4),
+                            Text('Simpan', style: TextStyle(color: Colors.white)),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      }
+    );
+  }
+
+  void _showChangePasswordModal() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          contentPadding: EdgeInsets.zero,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          content: SizedBox(
+            width: MediaQuery.of(context).size.width * 0.9,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [_maroonDark, _maroon],
+                    ),
+                    borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Row(
+                        children: [
+                          Icon(Icons.vpn_key, color: Colors.white, size: 20),
+                          SizedBox(width: 8),
+                          Text('Ganti Password', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                        ]
+                      ),
+                      InkWell(
+                        onTap: () => Navigator.pop(context),
+                        child: const Icon(Icons.close, color: Colors.white, size: 20),
+                      )
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildTextField('Password Lama', '', isPassword: true),
+                      const SizedBox(height: 12),
+                      _buildTextField('Password Baru', '', isPassword: true),
+                      const SizedBox(height: 12),
+                      _buildTextField('Konfirmasi Password', '', isPassword: true),
+                    ],
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: const Text('Batal', style: TextStyle(color: Colors.grey)),
+                      ),
+                      const SizedBox(width: 8),
+                      ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(context);
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Password berhasil diubah!'),
+                              backgroundColor: Colors.green,
+                              behavior: SnackBarBehavior.floating,
+                            )
+                          );
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: _maroon,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                        ),
+                        child: const Row(
+                          children: [
+                            Icon(Icons.security, size: 16, color: Colors.white),
+                            SizedBox(width: 4),
+                            Text('Simpan', style: TextStyle(color: Colors.white)),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      }
+    );
+  }
+}
