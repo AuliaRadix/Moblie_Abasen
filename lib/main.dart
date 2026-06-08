@@ -5,6 +5,20 @@ void main() {
   runApp(const AmbasenApp());
 }
 
+class NoStretchScrollBehavior extends ScrollBehavior {
+  const NoStretchScrollBehavior();
+
+  @override
+  Widget buildOverscrollIndicator(BuildContext context, Widget child, ScrollableDetails details) {
+    return child;
+  }
+
+  @override
+  ScrollPhysics getScrollPhysics(BuildContext context) {
+    return const ClampingScrollPhysics();
+  }
+}
+
 class AmbasenApp extends StatelessWidget {
   const AmbasenApp({super.key});
 
@@ -12,6 +26,7 @@ class AmbasenApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Login - Ambasen',
+      scrollBehavior: const NoStretchScrollBehavior(),
       theme: ThemeData(
         primaryColor: const Color(0xFF800020),
         fontFamily: 'Segoe UI',
@@ -108,6 +123,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   child: Center(
                     child: SingleChildScrollView(
+                      physics: const ClampingScrollPhysics(),
                       padding: const EdgeInsets.all(40),
                       child: _buildRightPanel(),
                     ),
@@ -119,6 +135,7 @@ class _LoginScreenState extends State<LoginScreen> {
             // Layout Mobile
             return Center(
               child: SingleChildScrollView(
+                physics: const ClampingScrollPhysics(),
                 child: Container(
                   width: double.infinity,
                   constraints: const BoxConstraints(maxWidth: 460),

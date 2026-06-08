@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'dashboard.dart';
 import 'scan_qr.dart';
 import 'profil.dart';
+import 'izin.dart';
+import 'fixed_fab.dart';
 
 class ListMatakuliahScreen extends StatefulWidget {
   const ListMatakuliahScreen({super.key});
@@ -163,9 +165,11 @@ class _ListMatakuliahScreenState extends State<ListMatakuliahScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF4F6F9),
+      resizeToAvoidBottomInset: false,
       body: Stack(
         children: [
           SingleChildScrollView(
+            physics: const ClampingScrollPhysics(),
             padding: const EdgeInsets.only(bottom: 90), // Spacing for bottom nav
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -217,7 +221,7 @@ class _ListMatakuliahScreenState extends State<ListMatakuliahScreen> {
           ),
         ),
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      floatingActionButtonLocation: const FixedCenterDockedFabLocation(),
       bottomNavigationBar: _buildBottomNav(),
     );
   }
@@ -728,6 +732,7 @@ class _ListMatakuliahScreenState extends State<ListMatakuliahScreen> {
         Widget? targetPage;
         if (index == 0) targetPage = const DashboardScreen();
         if (index == 1) targetPage = const ListMatakuliahScreen();
+        if (index == 2) targetPage = const IzinScreen();
         if (index == 3) targetPage = const ProfilScreen();
         
         if (targetPage != null) {

@@ -3,6 +3,8 @@ import 'dart:async';
 import 'dashboard.dart';
 import 'list_matakuliah.dart';
 import 'profil.dart';
+import 'izin.dart';
+import 'fixed_fab.dart';
 
 class ScanQrScreen extends StatefulWidget {
   const ScanQrScreen({super.key});
@@ -114,9 +116,11 @@ class _ScanQrScreenState extends State<ScanQrScreen> with SingleTickerProviderSt
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF4F6F9),
+      resizeToAvoidBottomInset: false,
       body: Stack(
         children: [
           SingleChildScrollView(
+            physics: const ClampingScrollPhysics(),
             padding: const EdgeInsets.only(bottom: 90),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -169,7 +173,7 @@ class _ScanQrScreenState extends State<ScanQrScreen> with SingleTickerProviderSt
           ),
         ),
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      floatingActionButtonLocation: const FixedCenterDockedFabLocation(),
       bottomNavigationBar: _buildBottomNav(),
     );
   }
@@ -642,6 +646,7 @@ class _ScanQrScreenState extends State<ScanQrScreen> with SingleTickerProviderSt
         Widget? targetPage;
         if (index == 0) targetPage = const DashboardScreen();
         if (index == 1) targetPage = const ListMatakuliahScreen();
+        if (index == 2) targetPage = const IzinScreen();
         if (index == 3) targetPage = const ProfilScreen();
         
         if (targetPage != null) {

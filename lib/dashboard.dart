@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'list_matakuliah.dart';
 import 'scan_qr.dart';
 import 'profil.dart';
+import 'izin.dart';
+import 'fixed_fab.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -21,9 +23,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF4F6F9),
+      resizeToAvoidBottomInset: false,
       body: Stack(
         children: [
           SingleChildScrollView(
+            physics: const ClampingScrollPhysics(),
             padding: const EdgeInsets.only(bottom: 90), // Spacing for bottom nav
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -35,8 +39,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      _buildQuickActions(),
-                      const SizedBox(height: 20),
                       _buildKehadiranPerMK(),
                       const SizedBox(height: 20),
                       _buildStatusIzin(),
@@ -83,7 +85,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ),
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      floatingActionButtonLocation: const FixedCenterDockedFabLocation(),
       bottomNavigationBar: _buildBottomNav(),
     );
   }
@@ -323,67 +325,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildQuickActions() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Aksi Cepat',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF1A1A2E),
-            fontSize: 15,
-          ),
-        ),
-        const SizedBox(height: 12),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            _buildQuickBtn(Icons.qr_code_scanner, 'Scan QR', () {}),
-            _buildQuickBtn(Icons.description, 'Ajukan Izin', _showIzinModal),
-            _buildQuickBtn(Icons.book, 'Mata Kuliah', () {}),
-            _buildQuickBtn(Icons.show_chart, 'Rekap', () {}),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildQuickBtn(IconData icon, String label, VoidCallback onTap) {
-    return Expanded(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4.0),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(12),
-          child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 14),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              border: Border.all(color: const Color(0xFFE0E0E0), width: 1.5),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Column(
-              children: [
-                Icon(icon, color: _maroon, size: 24),
-                const SizedBox(height: 8),
-                Text(
-                  label,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF333333),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildKehadiranPerMK() {
     final mkList = [
       {'nama': 'Algoritma & Pemrograman', 'hadir': 14, 'total': 16, 'color': _maroon},
@@ -463,9 +404,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _buildStatusIzin() {
     final izinData = [
-      {'mk': 'Algoritma & Pemrograman', 'tgl': '10 Apr 2026', 'jenis': 'Sakit', 'status': 'Disetujui', 'color': const Color(0xFF198754)},
-      {'mk': 'Basis Data', 'tgl': '08 Apr 2026', 'jenis': 'Izin Keluarga', 'status': 'Disetujui', 'color': const Color(0xFF198754)},
-      {'mk': 'Rekayasa PL', 'tgl': '14 Apr 2026', 'jenis': 'Kegiatan Kampus', 'status': 'Menunggu', 'color': const Color(0xFFFD7E14)},
+      {'mk': 'Algoritma & Pemrograman', 'tgl': '2026-04-10', 'jenis': 'Sakit', 'status': 'Disetujui', 'color': const Color(0xFF198754)},
+      {'mk': 'Basis Data', 'tgl': '2026-04-08', 'jenis': 'Izin Keluarga', 'status': 'Disetujui', 'color': const Color(0xFF198754)},
+      {'mk': 'Rekayasa PL', 'tgl': '2026-04-14', 'jenis': 'Kegiatan Kampus', 'status': 'Menunggu', 'color': const Color(0xFFFD7E14)},
     ];
 
     return Container(
@@ -686,6 +627,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
         Widget? targetPage;
         if (index == 0) targetPage = const DashboardScreen();
         if (index == 1) targetPage = const ListMatakuliahScreen();
+        if (index == 2) targetPage = const IzinScreen();
         if (index == 3) targetPage = const ProfilScreen();
         
         if (targetPage != null) {
@@ -738,6 +680,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
+  // Fungsi Modal Izin untuk menjaga kompatibilitas, meskipun tidak dipanggil langsung dari Dashboard
   void _showIzinModal() {
     showModalBottomSheet(
       context: context,
