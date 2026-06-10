@@ -1,8 +1,16 @@
-import 'package:flutter/material.dart';
 import 'dart:async';
+
+import 'package:flutter/material.dart';
+import 'package:mobile_scanner/mobile_scanner.dart';
+import 'package:permission_handler/permission_handler.dart';
+
 import 'dashboard.dart';
 import 'list_matakuliah.dart';
+import 'models/scan_result.dart';
 import 'profil.dart';
+import 'services/location_service.dart';
+import 'services/mahasiswa_service.dart';
+import 'services/session_manager.dart';
 
 class ScanQrScreen extends StatefulWidget {
   const ScanQrScreen({super.key});
@@ -11,10 +19,21 @@ class ScanQrScreen extends StatefulWidget {
   State<ScanQrScreen> createState() => _ScanQrScreenState();
 }
 
-class _ScanQrScreenState extends State<ScanQrScreen> with SingleTickerProviderStateMixin {
+class _ScanQrScreenState extends State<ScanQrScreen>
+    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   int _step = 1; // 1: scan, 2: process, 3: result
   bool _isSuccess = false;
-  
+  bool _isProcessing = false;
+  bool _cameraReady = false;
+  bool _locationReady = false;
+  ScanResult? _scanResult;
+  final _session = SessionManager.instance;
+  final _scannerController = MobileScannerController(
+    detectionSpeed: DetectionSpeed.noDuplicates,
+    facing: CameraFacing.back,
+    autoStart: false,
+  );
+
   late AnimationController _beamController;
   late Animation<double> _beamAnimation;
   Timer? _timer;
@@ -26,88 +45,150 @@ class _ScanQrScreenState extends State<ScanQrScreen> with SingleTickerProviderSt
   @override
   void initState() {
     super.initState();
-    _beamController = AnimationController(vsync: this, duration: const Duration(seconds: 2));
+    WidgetsBinding.instance.addObserver(this);
+    _beamController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    );
     _beamAnimation = Tween<double>(begin: 0, end: 230).animate(_beamController);
     _beamController.repeat();
 
-    // Update time every second
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (mounted) setState(() {});
     });
+
+    _preparePermissions();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (!_cameraReady || _step != 1) return;
+    if (state == AppLifecycleState.resumed) {
+      unawaited(_scannerController.start());
+    } else if (state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.paused) {
+      unawaited(_scannerController.stop());
+    }
+  }
+
+  Future<void> _preparePermissions() async {
+    try {
+      var cameraStatus = await Permission.camera.status;
+      if (!cameraStatus.isGranted) {
+        cameraStatus = await Permission.camera.request();
+      }
+      if (!cameraStatus.isGranted) return;
+
+      final locationGranted = await LocationService.instance.ensurePermission();
+      if (!locationGranted) return;
+
+      await LocationService.instance.getCurrentPosition(useCache: false);
+
+      if (!mounted) return;
+      setState(() {
+        _cameraReady = true;
+        _locationReady = true;
+      });
+      if (_step == 1) await _scannerController.start();
+    } catch (_) {}
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _timer?.cancel();
     _beamController.dispose();
+    _scannerController.dispose();
     super.dispose();
   }
 
-  String _getDateStr() {
-    final now = DateTime.now();
-    final months = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
-    final weekdays = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'];
-    return "${weekdays[now.weekday - 1]}, ${now.day} ${months[now.month - 1]} ${now.year}";
-  }
+  Future<void> _handleQrDetected(String rawValue) async {
+    if (_isProcessing || _step != 1 || !_cameraReady || !_locationReady) return;
+    _isProcessing = true;
+    await _scannerController.stop();
 
-  String _getTimeStr() {
-    final now = DateTime.now();
-    return "${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}:${now.second.toString().padLeft(2, '0')}";
-  }
-
-  void _simulateScanSuccess() {
     setState(() {
       _step = 2;
       _beamController.duration = const Duration(milliseconds: 400);
       _beamController.repeat();
     });
 
-    Future.delayed(const Duration(milliseconds: 1400), () {
-      if (!mounted) return;
-      setState(() {
-        _step = 3;
-        _isSuccess = true;
-        _beamController.stop();
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("✅ Presensi berhasil dicatat!"),
-          backgroundColor: Color(0xFF198754),
-          behavior: SnackBarBehavior.floating,
-        ),
+    try {
+      final validation = await MahasiswaService.instance.validateScanToken(rawValue);
+      if (!validation.success) {
+        _finishScan(false, validation);
+        return;
+      }
+
+      final position = await LocationService.instance.getCurrentPosition();
+      final result = await MahasiswaService.instance.processAttendance(
+        rawQr: rawValue,
+        latitude: position.latitude,
+        longitude: position.longitude,
       );
-    });
+      _finishScan(result.success, result);
+    } on LocationException catch (e) {
+      _finishScan(false, ScanResult(success: false, message: e.message));
+    } catch (e) {
+      _finishScan(
+        false,
+        ScanResult(success: false, message: 'Gagal memproses presensi: $e'),
+      );
+    } finally {
+      _isProcessing = false;
+    }
   }
 
-  void _simulateScanFail() {
+  void _finishScan(bool success, ScanResult result) {
+    if (!mounted) return;
     setState(() {
-      _step = 2;
+      _step = 3;
+      _isSuccess = success;
+      _scanResult = result;
+      _beamController.stop();
     });
 
-    Future.delayed(const Duration(milliseconds: 1200), () {
-      if (!mounted) return;
-      setState(() {
-        _step = 3;
-        _isSuccess = false;
-        _beamController.stop();
-      });
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("❌ Scan gagal. QR tidak valid."),
-          backgroundColor: Color(0xFFDC3545),
-          behavior: SnackBarBehavior.floating,
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          success ? '✅ Presensi berhasil dicatat!' : '❌ ${result.message}',
         ),
-      );
-    });
+        backgroundColor:
+            success ? const Color(0xFF198754) : const Color(0xFFDC3545),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  String _getDateStr() {
+    final now = DateTime.now();
+    final months = [
+      'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+      'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
+    ];
+    final weekdays = [
+      'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu',
+    ];
+    return '${weekdays[now.weekday - 1]}, ${now.day} ${months[now.month - 1]} ${now.year}';
+  }
+
+  String _getTimeStr() {
+    final now = DateTime.now();
+    return '${now.hour.toString().padLeft(2, '0')}:'
+        '${now.minute.toString().padLeft(2, '0')}:'
+        '${now.second.toString().padLeft(2, '0')}';
   }
 
   void _resetScan() {
     setState(() {
       _step = 1;
       _isSuccess = false;
+      _scanResult = null;
+      _isProcessing = false;
       _beamController.duration = const Duration(seconds: 2);
       _beamController.repeat();
     });
+    if (_cameraReady) _scannerController.start();
   }
 
   @override
@@ -159,7 +240,7 @@ class _ScanQrScreenState extends State<ScanQrScreen> with SingleTickerProviderSt
                   color: _maroon.withOpacity(0.4),
                   blurRadius: 16,
                   offset: const Offset(0, 4),
-                )
+                ),
               ],
               border: Border.all(color: Colors.white, width: 4),
             ),
@@ -254,8 +335,11 @@ class _ScanQrScreenState extends State<ScanQrScreen> with SingleTickerProviderSt
               border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
             ),
             child: Text(
-              _step == 1 ? "Langkah 1: Mulai scan kamera" : 
-              (_step == 2 ? "Langkah 2: Memproses QR Code..." : "Langkah 3: Selesai"),
+              _step == 1
+                  ? 'Langkah 1: Mulai scan kamera'
+                  : (_step == 2
+                      ? 'Langkah 2: Memproses QR Code...'
+                      : 'Langkah 3: Selesai'),
               textAlign: TextAlign.center,
               style: const TextStyle(fontSize: 12, color: Colors.grey),
             ),
@@ -266,15 +350,19 @@ class _ScanQrScreenState extends State<ScanQrScreen> with SingleTickerProviderSt
   }
 
   Widget _buildStepDot(int dotStep) {
-    bool isDone = dotStep < _step;
-    bool isActive = dotStep == _step;
-    
-    Color bgColor = isDone ? const Color(0xFF198754) : Colors.white;
-    Color borderColor = isDone ? const Color(0xFF198754) : (isActive ? _maroon : Colors.grey.shade300);
-    Color textColor = isDone ? Colors.white : (isActive ? _maroon : Colors.grey.shade400);
+    final isDone = dotStep < _step;
+    final isActive = dotStep == _step;
+
+    final bgColor = isDone ? const Color(0xFF198754) : Colors.white;
+    final borderColor = isDone
+        ? const Color(0xFF198754)
+        : (isActive ? _maroon : Colors.grey.shade300);
+    final textColor =
+        isDone ? Colors.white : (isActive ? _maroon : Colors.grey.shade400);
 
     return Container(
-      width: 28, height: 28,
+      width: 28,
+      height: 28,
       decoration: BoxDecoration(
         color: bgColor,
         shape: BoxShape.circle,
@@ -283,13 +371,20 @@ class _ScanQrScreenState extends State<ScanQrScreen> with SingleTickerProviderSt
       child: Center(
         child: isDone
             ? const Icon(Icons.check, size: 16, color: Colors.white)
-            : Text("$dotStep", style: TextStyle(color: textColor, fontWeight: FontWeight.bold, fontSize: 12)),
+            : Text(
+                '$dotStep',
+                style: TextStyle(
+                  color: textColor,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                ),
+              ),
       ),
     );
   }
 
   Widget _buildStepLine(int targetStep) {
-    bool isDone = targetStep <= _step;
+    final isDone = targetStep <= _step;
     return Expanded(
       child: Container(
         height: 2,
@@ -305,16 +400,35 @@ class _ScanQrScreenState extends State<ScanQrScreen> with SingleTickerProviderSt
       child: Stack(
         alignment: Alignment.center,
         children: [
+          if (_cameraReady && _locationReady && _step < 3)
+            Positioned.fill(
+              child: ClipRect(
+                child: MobileScanner(
+                  controller: _scannerController,
+                  fit: BoxFit.cover,
+                  onDetect: (capture) {
+                    if (_isProcessing || _step != 1) return;
+                    final barcodes = capture.barcodes;
+                    if (barcodes.isEmpty) return;
+                    final value = barcodes.first.rawValue;
+                    if (value != null && value.isNotEmpty) {
+                      unawaited(_handleQrDetected(value));
+                    }
+                  },
+                ),
+              ),
+            ),
           SizedBox(
             width: 230,
             height: 230,
             child: Stack(
               children: [
-                // Corner TL
                 Positioned(
-                  top: 0, left: 0,
+                  top: 0,
+                  left: 0,
                   child: Container(
-                    width: 30, height: 30,
+                    width: 30,
+                    height: 30,
                     decoration: const BoxDecoration(
                       border: Border(
                         top: BorderSide(color: Color(0xFFFFD700), width: 3),
@@ -323,11 +437,12 @@ class _ScanQrScreenState extends State<ScanQrScreen> with SingleTickerProviderSt
                     ),
                   ),
                 ),
-                // Corner TR
                 Positioned(
-                  top: 0, right: 0,
+                  top: 0,
+                  right: 0,
                   child: Container(
-                    width: 30, height: 30,
+                    width: 30,
+                    height: 30,
                     decoration: const BoxDecoration(
                       border: Border(
                         top: BorderSide(color: Color(0xFFFFD700), width: 3),
@@ -336,11 +451,12 @@ class _ScanQrScreenState extends State<ScanQrScreen> with SingleTickerProviderSt
                     ),
                   ),
                 ),
-                // Corner BL
                 Positioned(
-                  bottom: 0, left: 0,
+                  bottom: 0,
+                  left: 0,
                   child: Container(
-                    width: 30, height: 30,
+                    width: 30,
+                    height: 30,
                     decoration: const BoxDecoration(
                       border: Border(
                         bottom: BorderSide(color: Color(0xFFFFD700), width: 3),
@@ -349,11 +465,12 @@ class _ScanQrScreenState extends State<ScanQrScreen> with SingleTickerProviderSt
                     ),
                   ),
                 ),
-                // Corner BR
                 Positioned(
-                  bottom: 0, right: 0,
+                  bottom: 0,
+                  right: 0,
                   child: Container(
-                    width: 30, height: 30,
+                    width: 30,
+                    height: 30,
                     decoration: const BoxDecoration(
                       border: Border(
                         bottom: BorderSide(color: Color(0xFFFFD700), width: 3),
@@ -362,27 +479,14 @@ class _ScanQrScreenState extends State<ScanQrScreen> with SingleTickerProviderSt
                     ),
                   ),
                 ),
-                // QR Placeholder
-                Center(
-                  child: Container(
-                    width: 230, height: 230,
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.white.withOpacity(0.15), width: 1, style: BorderStyle.none),
-                    ),
-                    child: Center(
-                      child: Icon(Icons.qr_code, size: 80, color: Colors.white.withOpacity(0.15)),
+                if (!_cameraReady || !_locationReady)
+                  Center(
+                    child: Icon(
+                      Icons.qr_code,
+                      size: 80,
+                      color: Colors.white.withOpacity(0.15),
                     ),
                   ),
-                ),
-                // Dashed border inside
-                Positioned.fill(
-                  child: Padding(
-                    padding: const EdgeInsets.all(2.0),
-                    // Just a subtle indicator, avoiding full dashed border package dependency for simplicity.
-                    child: Container(color: Colors.transparent),
-                  ),
-                ),
-                // Beam
                 if (_step < 3)
                   AnimatedBuilder(
                     animation: _beamAnimation,
@@ -395,7 +499,11 @@ class _ScanQrScreenState extends State<ScanQrScreen> with SingleTickerProviderSt
                           height: 2,
                           decoration: const BoxDecoration(
                             gradient: LinearGradient(
-                              colors: [Colors.transparent, Color(0xFFFFD700), Colors.transparent],
+                              colors: [
+                                Colors.transparent,
+                                Color(0xFFFFD700),
+                                Colors.transparent,
+                              ],
                             ),
                           ),
                         ),
@@ -405,26 +513,44 @@ class _ScanQrScreenState extends State<ScanQrScreen> with SingleTickerProviderSt
               ],
             ),
           ),
-          // Status Badge
           Positioned(
             bottom: 12,
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
               decoration: BoxDecoration(
-                color: _step == 1 ? Colors.amber.shade700 : (_step == 2 ? Colors.lightBlue : (_isSuccess ? const Color(0xFF198754) : const Color(0xFFDC3545))),
+                color: _step == 1
+                    ? Colors.amber.shade700
+                    : (_step == 2
+                        ? Colors.lightBlue
+                        : (_isSuccess
+                            ? const Color(0xFF198754)
+                            : const Color(0xFFDC3545))),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(
-                    _step == 1 ? Icons.videocam : (_step == 2 ? Icons.sync : (_isSuccess ? Icons.check : Icons.warning)), 
-                    color: Colors.white, size: 14
+                    _step == 1
+                        ? Icons.videocam
+                        : (_step == 2
+                            ? Icons.sync
+                            : (_isSuccess ? Icons.check : Icons.warning)),
+                    color: Colors.white,
+                    size: 14,
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    _step == 1 ? "Menunggu QR..." : (_step == 2 ? "Memproses..." : (_isSuccess ? "Terdeteksi!" : "Gagal...")), 
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12)
+                    _step == 1
+                        ? 'Menunggu QR...'
+                        : (_step == 2
+                            ? 'Memproses...'
+                            : (_isSuccess ? 'Terdeteksi!' : 'Gagal...')),
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                    ),
                   ),
                 ],
               ),
@@ -436,13 +562,16 @@ class _ScanQrScreenState extends State<ScanQrScreen> with SingleTickerProviderSt
   }
 
   Widget _buildScanButtons() {
+    final nama = _session.user?.nama ?? 'Mahasiswa';
+    final nim = _session.user?.nim ?? '-';
+
     return Column(
       children: [
         Container(
           margin: const EdgeInsets.only(bottom: 24),
           child: Column(
             children: [
-              _buildInfoRow(Icons.person, "Andi Pratama  M001"),
+              _buildInfoRow(Icons.person, '$nama  $nim'),
               const SizedBox(height: 8),
               _buildInfoRow(Icons.calendar_today, _getDateStr()),
               const SizedBox(height: 8),
@@ -450,31 +579,6 @@ class _ScanQrScreenState extends State<ScanQrScreen> with SingleTickerProviderSt
             ],
           ),
         ),
-        ElevatedButton.icon(
-          onPressed: _simulateScanSuccess,
-          icon: const Icon(Icons.check_circle, color: Colors.white),
-          label: const Text("Simulasi: Scan Berhasil", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-          style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xFF198754),
-            minimumSize: const Size(double.infinity, 54),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-            elevation: 4,
-            shadowColor: const Color(0xFF198754).withOpacity(0.4),
-          ),
-        ),
-        const SizedBox(height: 12),
-        OutlinedButton.icon(
-          onPressed: _simulateScanFail,
-          icon: const Icon(Icons.cancel, color: Color(0xFFDC3545)),
-          label: const Text("Simulasi: Scan Gagal", style: TextStyle(color: Color(0xFFDC3545), fontWeight: FontWeight.bold)),
-          style: OutlinedButton.styleFrom(
-            backgroundColor: const Color(0xFFDC3545).withOpacity(0.05),
-            side: const BorderSide(color: Color(0xFFDC3545), width: 2),
-            minimumSize: const Size(double.infinity, 54),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-          ),
-        ),
-        const SizedBox(height: 24),
         const Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -482,12 +586,13 @@ class _ScanQrScreenState extends State<ScanQrScreen> with SingleTickerProviderSt
             SizedBox(width: 8),
             Expanded(
               child: Text(
-                "Pada implementasi nyata, kamera perangkat akan diaktifkan untuk membaca QR Code dari layar dosen.", 
-                style: TextStyle(fontSize: 11, color: Colors.grey)
-              )
+                'Arahkan kamera ke QR Code dari layar dosen. '
+                'Pastikan izin kamera dan lokasi sudah diaktifkan.',
+                style: TextStyle(fontSize: 11, color: Colors.grey),
+              ),
             ),
-          ]
-        )
+          ],
+        ),
       ],
     );
   }
@@ -498,13 +603,26 @@ class _ScanQrScreenState extends State<ScanQrScreen> with SingleTickerProviderSt
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(10),
-        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.02), blurRadius: 4, offset: const Offset(0, 2))],
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
+        ],
       ),
       child: Row(
         children: [
           Icon(icon, color: _maroon, size: 18),
           const SizedBox(width: 12),
-          Text(text, style: const TextStyle(fontSize: 13, color: Color(0xFF555555), fontWeight: FontWeight.w600)),
+          Text(
+            text,
+            style: const TextStyle(
+              fontSize: 13,
+              color: Color(0xFF555555),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
         ],
       ),
     );
@@ -517,24 +635,32 @@ class _ScanQrScreenState extends State<ScanQrScreen> with SingleTickerProviderSt
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
-          BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 10, offset: const Offset(0, 2)),
+          BoxShadow(
+            color: Colors.black.withOpacity(0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 2),
+          ),
         ],
       ),
       child: Column(
         children: [
-          Text(_isSuccess ? "✅" : "❌", style: const TextStyle(fontSize: 60)),
+          Text(_isSuccess ? '✅' : '❌', style: const TextStyle(fontSize: 60)),
           const SizedBox(height: 12),
           Text(
-            _isSuccess ? "Presensi Berhasil!" : "Scan Gagal!",
+            _isSuccess ? 'Presensi Berhasil!' : 'Scan Gagal!',
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
-              color: _isSuccess ? const Color(0xFF198754) : const Color(0xFFDC3545),
+              color: _isSuccess
+                  ? const Color(0xFF198754)
+                  : const Color(0xFFDC3545),
             ),
           ),
           const SizedBox(height: 8),
           Text(
-            _isSuccess ? "Kehadiran Anda telah tercatat oleh sistem." : "QR Code tidak valid atau sudah kadaluarsa. Hubungi dosen Anda.",
+            _isSuccess
+                ? 'Kehadiran Anda telah tercatat oleh sistem.'
+                : 'QR Code tidak valid atau sudah kadaluarsa. Hubungi dosen Anda.',
             textAlign: TextAlign.center,
             style: const TextStyle(color: Colors.grey, fontSize: 13),
           ),
@@ -542,13 +668,32 @@ class _ScanQrScreenState extends State<ScanQrScreen> with SingleTickerProviderSt
           if (_isSuccess)
             Column(
               children: [
-                _buildResultRow(Icons.book, "Mata Kuliah", "Algoritma & Pemrograman"),
+                if (_scanResult?.mataKuliah != null) ...[
+                  _buildResultRow(
+                    Icons.book,
+                    'Mata Kuliah',
+                    _scanResult!.mataKuliah!,
+                  ),
+                  const SizedBox(height: 8),
+                ],
+                _buildResultRow(
+                  Icons.calendar_today,
+                  'Tanggal',
+                  _scanResult?.tanggal ?? _getDateStr(),
+                ),
                 const SizedBox(height: 8),
-                _buildResultRow(Icons.calendar_today, "Tanggal", _getDateStr()),
+                _buildResultRow(
+                  Icons.access_time,
+                  'Waktu',
+                  _scanResult?.waktu ?? _getTimeStr(),
+                ),
                 const SizedBox(height: 8),
-                _buildResultRow(Icons.access_time, "Waktu", _getTimeStr()),
-                const SizedBox(height: 8),
-                _buildResultRow(Icons.person, "Status", "HADIR ✓", valColor: const Color(0xFF198754)),
+                _buildResultRow(
+                  Icons.person,
+                  'Status',
+                  _scanResult?.status ?? 'HADIR ✓',
+                  valColor: const Color(0xFF198754),
+                ),
               ],
             )
           else
@@ -558,15 +703,19 @@ class _ScanQrScreenState extends State<ScanQrScreen> with SingleTickerProviderSt
                 color: const Color(0xFFDC3545).withOpacity(0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Row(
+              child: Row(
                 children: [
-                  Icon(Icons.warning, color: Color(0xFFDC3545), size: 20),
-                  SizedBox(width: 8),
+                  const Icon(Icons.warning, color: Color(0xFFDC3545), size: 20),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      "QR Code telah expired atau di luar area yang diizinkan.", 
-                      style: TextStyle(color: Color(0xFFDC3545), fontSize: 12)
-                    )
+                      _scanResult?.message ??
+                          'QR Code telah expired atau di luar area yang diizinkan.',
+                      style: const TextStyle(
+                        color: Color(0xFFDC3545),
+                        fontSize: 12,
+                      ),
+                    ),
                   ),
                 ],
               ),
@@ -577,11 +726,16 @@ class _ScanQrScreenState extends State<ScanQrScreen> with SingleTickerProviderSt
             child: ElevatedButton.icon(
               onPressed: _resetScan,
               icon: const Icon(Icons.refresh, color: Colors.white),
-              label: const Text("Scan Lagi", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+              label: const Text(
+                'Scan Lagi',
+                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              ),
               style: ElevatedButton.styleFrom(
                 backgroundColor: _maroon,
                 padding: const EdgeInsets.symmetric(vertical: 14),
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30),
+                ),
               ),
             ),
           ),
@@ -590,7 +744,12 @@ class _ScanQrScreenState extends State<ScanQrScreen> with SingleTickerProviderSt
     );
   }
 
-  Widget _buildResultRow(IconData icon, String label, String val, {Color? valColor}) {
+  Widget _buildResultRow(
+    IconData icon,
+    String label,
+    String val, {
+    Color? valColor,
+  }) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
@@ -601,13 +760,17 @@ class _ScanQrScreenState extends State<ScanQrScreen> with SingleTickerProviderSt
         children: [
           Icon(icon, color: _maroon, size: 16),
           const SizedBox(width: 8),
-          Text("$label:", style: const TextStyle(color: Colors.grey, fontSize: 12)),
+          Text('$label:', style: const TextStyle(color: Colors.grey, fontSize: 12)),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               val,
               textAlign: TextAlign.right,
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: valColor ?? Colors.black87),
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
+                color: valColor ?? Colors.black87,
+              ),
             ),
           ),
         ],
@@ -627,7 +790,7 @@ class _ScanQrScreenState extends State<ScanQrScreen> with SingleTickerProviderSt
           children: [
             _buildNavItem(Icons.home, 'Beranda', 0),
             _buildNavItem(Icons.menu_book, 'Mata Kuliah', 1),
-            const SizedBox(width: 48), // Space for FAB
+            const SizedBox(width: 48),
             _buildNavItem(Icons.description, 'Izin', 2),
             _buildNavItem(Icons.person, 'Profil', 3),
           ],
@@ -643,7 +806,7 @@ class _ScanQrScreenState extends State<ScanQrScreen> with SingleTickerProviderSt
         if (index == 0) targetPage = const DashboardScreen();
         if (index == 1) targetPage = const ListMatakuliahScreen();
         if (index == 3) targetPage = const ProfilScreen();
-        
+
         if (targetPage != null) {
           Navigator.pushReplacement(
             context,

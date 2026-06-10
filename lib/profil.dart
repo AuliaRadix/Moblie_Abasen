@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+
 import 'dashboard.dart';
 import 'list_matakuliah.dart';
 import 'scan_qr.dart';
+import 'services/session_manager.dart';
 
 class ProfilScreen extends StatefulWidget {
   const ProfilScreen({super.key});
@@ -12,6 +14,7 @@ class ProfilScreen extends StatefulWidget {
 
 class _ProfilScreenState extends State<ProfilScreen> {
   int _currentIndex = 3;
+  final _session = SessionManager.instance;
 
   final Color _maroon = const Color(0xFF800020);
   final Color _maroonDark = const Color(0xFF5A0016);
@@ -138,7 +141,10 @@ class _ProfilScreenState extends State<ProfilScreen> {
                   ]
                 ),
                 child: Center(
-                  child: Text('AP', style: TextStyle(color: _maroonDark, fontWeight: FontWeight.bold, fontSize: 24)),
+                  child: Text(
+                    _session.user?.initials ?? 'M',
+                    style: TextStyle(color: _maroonDark, fontWeight: FontWeight.bold, fontSize: 24),
+                  ),
                 ),
               ),
               const SizedBox(width: 16),
@@ -146,13 +152,19 @@ class _ProfilScreenState extends State<ProfilScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Andi Pratama', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18)),
+                    Text(
+                      _session.user?.nama ?? 'Mahasiswa',
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+                    ),
                     const SizedBox(height: 4),
                     Row(
                       children: [
                         Icon(Icons.credit_card, color: Colors.white.withOpacity(0.75), size: 14),
                         const SizedBox(width: 4),
-                        Text('NIM: M001', style: TextStyle(color: Colors.white.withOpacity(0.75), fontSize: 12)),
+                        Text(
+                          'NIM: ${_session.user?.nim ?? '-'}',
+                          style: TextStyle(color: Colors.white.withOpacity(0.75), fontSize: 12),
+                        ),
                       ]
                     ),
                     const SizedBox(height: 2),
@@ -160,7 +172,10 @@ class _ProfilScreenState extends State<ProfilScreen> {
                       children: [
                         Icon(Icons.business, color: Colors.white.withOpacity(0.7), size: 14),
                         const SizedBox(width: 4),
-                        Text('Teknik Informatika', style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 12)),
+                        Text(
+                          _session.user?.prodi ?? 'Program Studi',
+                          style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 12),
+                        ),
                       ]
                     ),
                   ],
@@ -193,11 +208,31 @@ class _ProfilScreenState extends State<ProfilScreen> {
         scrollDirection: Axis.horizontal,
         child: Row(
           children: [
-            _buildSummaryPill('87%', 'Kehadiran', _maroon),
-            _buildSummaryPill('13', 'Hadir', const Color(0xFF198754)),
-            _buildSummaryPill('1', 'Izin', const Color(0xFFFD7E14)),
-            _buildSummaryPill('2', 'Alpha', const Color(0xFFDC3545)),
-            _buildSummaryPill('14', 'SKS', const Color(0xFF0D6EFD)),
+            _buildSummaryPill(
+              '${(_session.user?.kehadiranPersen ?? 0).round()}%',
+              'Kehadiran',
+              _maroon,
+            ),
+            _buildSummaryPill(
+              '${_session.user?.totalHadir ?? 0}',
+              'Hadir',
+              const Color(0xFF198754),
+            ),
+            _buildSummaryPill(
+              '${_session.user?.totalIzin ?? 0}',
+              'Izin',
+              const Color(0xFFFD7E14),
+            ),
+            _buildSummaryPill(
+              '${_session.user?.totalAlpha ?? 0}',
+              'Alpha',
+              const Color(0xFFDC3545),
+            ),
+            _buildSummaryPill(
+              '${_session.user?.totalSks ?? 0}',
+              'SKS',
+              const Color(0xFF0D6EFD),
+            ),
           ],
         ),
       ),
@@ -331,8 +366,8 @@ class _ProfilScreenState extends State<ProfilScreen> {
       title: 'Informasi Pribadi',
       child: Column(
         children: [
-          _buildInfoRow('Nama Lengkap', _buildTextValue('Andi Pratama')),
-          _buildInfoRow('NIM', _buildTextValue('M001')),
+          _buildInfoRow('Nama Lengkap', _buildTextValue(_session.user?.nama ?? '-')),
+          _buildInfoRow('NIM', _buildTextValue(_session.user?.nim ?? '-')),
           _buildInfoRow('Email', _buildTextValue('andi@student.ac.id')),
           _buildInfoRow('No. HP', _buildTextValue('08111111111')),
           _buildInfoRow('Tanggal Lahir', _buildTextValue('15 Maret 2004')),

@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+
 import 'dashboard.dart';
-import 'scan_qr.dart';
 import 'profil.dart';
+import 'scan_qr.dart';
+import 'services/mahasiswa_service.dart';
+import 'services/session_manager.dart';
 
 class ListMatakuliahScreen extends StatefulWidget {
   const ListMatakuliahScreen({super.key});
@@ -12,12 +15,19 @@ class ListMatakuliahScreen extends StatefulWidget {
 
 class _ListMatakuliahScreenState extends State<ListMatakuliahScreen> {
   int _currentIndex = 1; // 1 for Mata Kuliah
+  bool _isLoading = true;
+  String? _errorMessage;
+  final _session = SessionManager.instance;
 
   final Color _maroon = const Color(0xFF800020);
   final Color _maroonDark = const Color(0xFF5A0016);
   final Color _maroonLight = const Color(0xFFC0003A);
 
-  final List<Map<String, dynamic>> mkData = [
+  List<Map<String, dynamic>> get mkData => _session.matakuliahList
+      .map((mk) => mk.toUiMap())
+      .toList();
+
+  static const List<Map<String, dynamic>> _fallbackMkData = [
     {
       'kode': 'MK001',
       'nama': 'Algoritma & Pemrograman',
@@ -160,6 +170,34 @@ class _ListMatakuliahScreenState extends State<ListMatakuliahScreen> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _loadMatakuliah();
+  }
+
+  Future<void> _loadMatakuliah() async {
+    if (_session.matakuliahList.isNotEmpty) {
+      setState(() => _isLoading = false);
+      return;
+    }
+
+    try {
+      await MahasiswaService.instance.loadMatakuliah();
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _errorMessage = null;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _errorMessage = e.toString();
+      });
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF4F6F9),
@@ -173,11 +211,22 @@ class _ListMatakuliahScreenState extends State<ListMatakuliahScreen> {
                 _buildTopHeader(),
                 Padding(
                   padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    children: mkData.asMap().entries.map((entry) {
-                      return _buildMkCard(entry.value, entry.key);
-                    }).toList(),
-                  ),
+                  child: _isLoading
+                      ? const Center(
+                          child: Padding(
+                            padding: EdgeInsets.all(32),
+                            child: CircularProgressIndicator(color: Color(0xFF800020)),
+                          ),
+                        )
+                      : Column(
+                          children: (_errorMessage != null && mkData.isEmpty
+                                  ? _fallbackMkData
+                                  : mkData)
+                              .asMap()
+                              .entries
+                              .map((entry) => _buildMkCard(entry.value, entry.key))
+                              .toList(),
+                        ),
                 ),
               ],
             ),
@@ -354,7 +403,7 @@ class _ListMatakuliahScreenState extends State<ListMatakuliahScreen> {
       ],
     );
   }
-
+  
   Widget _buildMkCard(Map<String, dynamic> mk, int index) {
     int hadir = mk['hadir'] as int;
     int total = mk['total'] as int;

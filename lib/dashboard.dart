@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+
 import 'list_matakuliah.dart';
-import 'scan_qr.dart';
 import 'profil.dart';
+import 'scan_qr.dart';
+import 'services/session_manager.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -12,6 +14,7 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   int _currentIndex = 0;
+  final _session = SessionManager.instance;
 
   final Color _maroon = const Color(0xFF800020);
   final Color _maroonDark = const Color(0xFF5A0016);
@@ -135,7 +138,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ),
                         child: Center(
                           child: Text(
-                            'AP',
+                            _session.user?.initials ?? 'M',
                             style: TextStyle(
                               color: _maroonDark,
                               fontWeight: FontWeight.bold,
@@ -155,16 +158,16 @@ class _DashboardScreenState extends State<DashboardScreen> {
                               fontSize: 12,
                             ),
                           ),
-                          const Text(
-                            'Andi Pratama',
-                            style: TextStyle(
+                          Text(
+                            _session.user?.nama ?? 'Mahasiswa',
+                            style: const TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
                               fontSize: 18,
                             ),
                           ),
                           Text(
-                            'NIM: M001 · Teknik Informatika',
+                            _session.user?.displaySubtitle ?? 'NIM: -',
                             style: TextStyle(
                               color: Colors.white.withOpacity(0.7),
                               fontSize: 12,
@@ -198,7 +201,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       fit: StackFit.expand,
                       children: [
                         CircularProgressIndicator(
-                          value: 0.87,
+                          value: (_session.user?.kehadiranPersen ?? 0) / 100,
                           strokeWidth: 8,
                           backgroundColor: Colors.white.withOpacity(0.15),
                           color: const Color(0xFFFFD700),
@@ -208,9 +211,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              const Text(
-                                '87%',
-                                style: TextStyle(
+                              Text(
+                                '${(_session.user?.kehadiranPersen ?? 0).round()}%',
+                                style: const TextStyle(
                                   color: Colors.white,
                                   fontWeight: FontWeight.bold,
                                   fontSize: 24,
@@ -244,9 +247,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           ),
                         ),
                         const SizedBox(height: 4),
-                        const Text(
-                          '87%',
-                          style: TextStyle(
+                        Text(
+                          '${(_session.user?.kehadiranPersen ?? 0).round()}%',
+                          style: const TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
                             fontSize: 32,

@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
-import 'dashboard.dart';
 
-void main() {
+import 'dashboard.dart';
+import 'services/api_service.dart';
+import 'services/auth_service.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await ApiService.instance.init();
   runApp(const AmbasenApp());
 }
 
@@ -32,15 +37,32 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   bool isPasswordVisible = false;
   bool isLoading = false;
+  bool isCheckingSession = true;
   String? errorMessage;
 
   final TextEditingController _usernameController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
 
-  final List<Map<String, String>> accounts = [
-    {'username': 'M001', 'password': 'password'},
-    {'username': 'M002', 'password': 'password'},
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _restoreSession();
+  }
+
+  Future<void> _restoreSession() async {
+    final restored = await AuthService.instance.tryRestoreSession();
+    if (!mounted) return;
+
+    if (restored) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const DashboardScreen()),
+      );
+      return;
+    }
+
+    setState(() => isCheckingSession = false);
+  }
 
   void handleLogin() async {
     setState(() {
@@ -51,39 +73,41 @@ class _LoginScreenState extends State<LoginScreen> {
     final username = _usernameController.text.trim();
     final password = _passwordController.text;
 
-    await Future.delayed(const Duration(milliseconds: 900));
+    try {
+      await AuthService.instance.login(username, password);
 
-    bool valid = accounts.any(
-      (a) => a['username'] == username && a['password'] == password,
-    );
+      if (!mounted) return;
+      setState(() => isLoading = false);
 
-    if (mounted) {
-      if (valid) {
-        setState(() {
-          isLoading = false;
-        });
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Login Berhasil!'),
-            backgroundColor: Colors.green,
-          ),
-        );
-        
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const DashboardScreen()),
-        );
-      } else {
-        setState(() {
-          isLoading = false;
-          errorMessage = 'Username atau password salah. Coba lagi.';
-        });
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Login Berhasil!'),
+          backgroundColor: Colors.green,
+        ),
+      );
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const DashboardScreen()),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        isLoading = false;
+        errorMessage = e.toString().replaceFirst('AuthException: ', '');
+      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    if (isCheckingSession) {
+      return const Scaffold(
+        backgroundColor: Color(0xFFF4F6F9),
+        body: Center(child: CircularProgressIndicator(color: Color(0xFF800020))),
+      );
+    }
+
     return Scaffold(
       backgroundColor: const Color(0xFFF4F6F9),
       body: LayoutBuilder(
