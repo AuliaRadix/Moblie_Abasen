@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
-
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'services/api_config.dart';
 import 'list_matakuliah.dart';
 import 'profil.dart';
 import 'scan_qr.dart';
+import 'izin.dart';
 import 'services/session_manager.dart';
+import 'services/fixed_fab.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -13,6 +17,49 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
+  Map<String, dynamic>? dashboardData;
+  @override
+  void initState() {
+    super.initState();
+    loadDashboard();
+  }
+
+  Color hexToColor(String hex) {
+    hex = hex.replaceAll('#', '');
+
+    if (hex.length == 6) {
+      hex = 'FF$hex';
+    }
+
+    return Color(int.parse(hex, radix: 16));
+  }
+
+  Future<void> loadDashboard() async {
+    try {
+      final url = '${ApiConfig.baseUrl}/mahasiswa/dashboard/api';
+
+      final response = await http.get(
+        Uri.parse(url),
+        headers: ApiConfig.defaultHeaders,
+      );
+
+      print('STATUS => ${response.statusCode}');
+      print('BODY => ${response.body}');
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+
+        setState(() {
+          dashboardData = data;
+        });
+
+        print("DATA => $dashboardData");
+      }
+    } catch (e) {
+      print('ERROR => $e');
+    }
+  }
+
   int _currentIndex = 0;
   final _session = SessionManager.instance;
 
@@ -27,7 +74,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
       body: Stack(
         children: [
           SingleChildScrollView(
-            padding: const EdgeInsets.only(bottom: 90), // Spacing for bottom nav
+            padding: const EdgeInsets.only(
+              bottom: 90,
+            ), // Spacing for bottom nav
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -38,7 +87,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      _buildQuickActions(),
                       const SizedBox(height: 20),
                       _buildKehadiranPerMK(),
                       const SizedBox(height: 20),
@@ -59,7 +107,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
         margin: const EdgeInsets.only(top: 30),
         child: FloatingActionButton(
           onPressed: () {
-            Navigator.push(context, MaterialPageRoute(builder: (context) => const ScanQrScreen()));
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const ScanQrScreen()),
+            );
           },
           backgroundColor: Colors.transparent,
           elevation: 0,
@@ -75,8 +126,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 BoxShadow(
                   color: _maroon.withOpacity(0.4),
                   blurRadius: 16,
-                  offset: const Offset(0, 4),
-                )
+                  offset: const Offset(2, 4),
+                ),
               ],
               border: Border.all(color: Colors.white, width: 4),
             ),
@@ -86,7 +137,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ),
         ),
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      floatingActionButtonLocation: const FixedCenterDockedFabLocation(),
       bottomNavigationBar: _buildBottomNav(),
     );
   }
@@ -106,8 +157,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
         clipBehavior: Clip.none,
         children: [
           Positioned(
-            top: -80,
-            right: -60,
+            top: -50,
+            right: -50,
             child: Container(
               width: 200,
               height: 200,
@@ -159,7 +210,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             ),
                           ),
                           Text(
-                            _session.user?.nama ?? 'Mahasiswa',
+                            dashboardData?['mahasiswa']?['nama'] ?? 'Mahasiswa',
                             style: const TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
@@ -177,18 +228,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       ),
                     ],
                   ),
-                  Container(
-                    width: 40,
-                    height: 40,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.15),
-                      shape: BoxShape.circle,
-                    ),
-                    child: IconButton(
-                      icon: const Icon(Icons.notifications, color: Colors.white, size: 20),
-                      onPressed: () {},
-                    ),
-                  ),
                 ],
               ),
               const SizedBox(height: 28),
@@ -201,7 +240,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       fit: StackFit.expand,
                       children: [
                         CircularProgressIndicator(
-                          value: (_session.user?.kehadiranPersen ?? 0) / 100,
+                          value:
+                              (dashboardData?['attendancePercentage'] ??
+                                  0 ??
+                                  0) /
+                              100,
                           strokeWidth: 8,
                           backgroundColor: Colors.white.withOpacity(0.15),
                           color: const Color(0xFFFFD700),
@@ -212,7 +255,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Text(
-                                '${(_session.user?.kehadiranPersen ?? 0).round()}%',
+                                '${dashboardData?['hadirCount'] ?? 0}',
                                 style: const TextStyle(
                                   color: Colors.white,
                                   fontWeight: FontWeight.bold,
@@ -248,7 +291,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          '${(_session.user?.kehadiranPersen ?? 0).round()}%',
+                          '${dashboardData?['attendancePercentage'] ?? 0}%',
+
                           style: const TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
@@ -284,11 +328,35 @@ class _DashboardScreenState extends State<DashboardScreen> {
         scrollDirection: Axis.horizontal,
         child: Row(
           children: [
-            _buildSummaryPill('5', 'Mata Kuliah', _maroon),
-            _buildSummaryPill('26', 'Hadir', const Color(0xFF198754)),
-            _buildSummaryPill('2', 'Izin', const Color(0xFFFD7E14)),
-            _buildSummaryPill('2', 'Alpha', const Color(0xFFDC3545)),
-            _buildSummaryPill('14', 'SKS Total', const Color(0xFF0D6EFD)),
+            _buildSummaryPill(
+              '${dashboardData?['totalMatakuliah'] ?? 0}',
+              'Mata Kuliah',
+              _maroon,
+            ),
+
+            _buildSummaryPill(
+              '${dashboardData?['hadirCount'] ?? 0}',
+              'Hadir',
+              const Color(0xFF198754),
+            ),
+
+            _buildSummaryPill(
+              '${dashboardData?['izinCount'] ?? 0}',
+              'Izin',
+              const Color(0xFFFD7E14),
+            ),
+
+            _buildSummaryPill(
+              '${dashboardData?['absenCount'] ?? 0}',
+              'Alpha',
+              const Color(0xFFDC3545),
+            ),
+
+            _buildSummaryPill(
+              '${dashboardData?['totalSks'] ?? 0}',
+              'SKS Total',
+              const Color(0xFF0D6EFD),
+            ),
           ],
         ),
       ),
@@ -326,75 +394,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
-  Widget _buildQuickActions() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Aksi Cepat',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF1A1A2E),
-            fontSize: 15,
-          ),
-        ),
-        const SizedBox(height: 12),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            _buildQuickBtn(Icons.qr_code_scanner, 'Scan QR', () {}),
-            _buildQuickBtn(Icons.description, 'Ajukan Izin', _showIzinModal),
-            _buildQuickBtn(Icons.book, 'Mata Kuliah', () {}),
-            _buildQuickBtn(Icons.show_chart, 'Rekap', () {}),
-          ],
-        ),
-      ],
-    );
-  }
-
-  Widget _buildQuickBtn(IconData icon, String label, VoidCallback onTap) {
-    return Expanded(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4.0),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(12),
-          child: Container(
-            padding: const EdgeInsets.symmetric(vertical: 14),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              border: Border.all(color: const Color(0xFFE0E0E0), width: 1.5),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Column(
-              children: [
-                Icon(icon, color: _maroon, size: 24),
-                const SizedBox(height: 8),
-                Text(
-                  label,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF333333),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildKehadiranPerMK() {
-    final mkList = [
-      {'nama': 'Algoritma & Pemrograman', 'hadir': 14, 'total': 16, 'color': _maroon},
-      {'nama': 'Basis Data', 'hadir': 13, 'total': 16, 'color': const Color(0xFF0D6EFD)},
-      {'nama': 'Rekayasa PL', 'hadir': 12, 'total': 16, 'color': const Color(0xFF198754)},
-      {'nama': 'Jaringan Komputer', 'hadir': 15, 'total': 16, 'color': const Color(0xFFFD7E14)},
-      {'nama': 'Sistem Operasi', 'hadir': 10, 'total': 16, 'color': const Color(0xFF6F42C1)},
-    ];
+    final mkList = dashboardData?['mkProgress'] ?? [];
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -418,7 +419,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
               const SizedBox(width: 8),
               const Text(
                 'Kehadiran per Mata Kuliah',
-                style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1A1A2E), fontSize: 14),
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF1A1A2E),
+                  fontSize: 14,
+                ),
               ),
             ],
           ),
@@ -426,7 +431,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ...mkList.map((mk) {
             int hadir = mk['hadir'] as int;
             int total = mk['total'] as int;
-            Color color = mk['color'] as Color;
+            Color color = hexToColor(mk['color']);
             double pct = hadir / total;
             int pctInt = (pct * 100).round();
 
@@ -435,15 +440,27 @@ class _DashboardScreenState extends State<DashboardScreen> {
               child: Column(
                 children: [
                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        mk['nama'] as String,
-                        style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: Color(0xFF333333)),
+                      Expanded(
+                        child: Text(
+                          mk['nama'] as String,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13,
+                            color: Color(0xFF333333),
+                          ),
+                        ),
                       ),
+                      const SizedBox(width: 8),
                       Text(
                         '$hadir/$total ($pctInt%)',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12, color: color),
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
+                          color: color,
+                        ),
                       ),
                     ],
                   ),
@@ -465,11 +482,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildStatusIzin() {
-    final izinData = [
-      {'mk': 'Algoritma & Pemrograman', 'tgl': '10 Apr 2026', 'jenis': 'Sakit', 'status': 'Disetujui', 'color': const Color(0xFF198754)},
-      {'mk': 'Basis Data', 'tgl': '08 Apr 2026', 'jenis': 'Izin Keluarga', 'status': 'Disetujui', 'color': const Color(0xFF198754)},
-      {'mk': 'Rekayasa PL', 'tgl': '14 Apr 2026', 'jenis': 'Kegiatan Kampus', 'status': 'Menunggu', 'color': const Color(0xFFFD7E14)},
-    ];
+    final izinData = dashboardData?['izinData'] ?? [];
+    print(dashboardData);
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -493,20 +507,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
               const SizedBox(width: 8),
               const Text(
                 'Status Pengajuan Izin',
-                style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1A1A2E), fontSize: 14),
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF1A1A2E),
+                  fontSize: 14,
+                ),
               ),
             ],
           ),
           const SizedBox(height: 16),
           ...izinData.map((iz) {
-            Color color = iz['color'] as Color;
+            Color color = hexToColor(iz['color']);
             bool disetujui = iz['status'] == 'Disetujui';
 
             return Container(
               margin: const EdgeInsets.only(bottom: 12),
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                color: disetujui ? const Color(0xFF198754).withOpacity(0.06) : const Color(0xFFFD7E14).withOpacity(0.06),
+                color: disetujui
+                    ? const Color(0xFF198754).withOpacity(0.06)
+                    : const Color(0xFFFD7E14).withOpacity(0.06),
                 border: Border.all(color: color.withOpacity(0.2)),
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -528,25 +548,39 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       children: [
                         Text(
                           iz['mk'] as String,
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF1A1A2E)),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                            color: Color(0xFF1A1A2E),
+                          ),
                         ),
                         const SizedBox(height: 4),
                         Text(
                           '${iz['jenis']} · ${iz['tgl']}',
-                          style: const TextStyle(color: Colors.grey, fontSize: 12),
+                          style: const TextStyle(
+                            color: Colors.grey,
+                            fontSize: 12,
+                          ),
                         ),
                       ],
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: color.withOpacity(0.15),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
                       iz['status'] as String,
-                      style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        color: color,
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ],
@@ -559,13 +593,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Widget _buildRiwayatPresensi() {
-    final riwayat = [
-      {'mk': 'Algoritma & Pemrograman', 'tgl': '15 Apr 2026', 'waktu': '07:35', 'status': 'Hadir', 'color': const Color(0xFF198754)},
-      {'mk': 'Basis Data', 'tgl': '15 Apr 2026', 'waktu': '09:40', 'status': 'Hadir', 'color': const Color(0xFF198754)},
-      {'mk': 'Rekayasa PL', 'tgl': '14 Apr 2026', 'waktu': '-', 'status': 'Izin', 'color': const Color(0xFFFD7E14)},
-      {'mk': 'Jaringan Komputer', 'tgl': '14 Apr 2026', 'waktu': '15:05', 'status': 'Hadir', 'color': const Color(0xFF198754)},
-      {'mk': 'Sistem Operasi', 'tgl': '12 Apr 2026', 'waktu': '-', 'status': 'Alpha', 'color': const Color(0xFFDC3545)},
-    ];
+    final riwayat = dashboardData?['riwayat'] ?? [];
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -589,7 +617,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
               const SizedBox(width: 8),
               const Text(
                 'Riwayat Presensi Terbaru',
-                style: TextStyle(fontWeight: FontWeight.bold, color: Color(0xFF1A1A2E), fontSize: 14),
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF1A1A2E),
+                  fontSize: 14,
+                ),
               ),
             ],
           ),
@@ -597,7 +629,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ...riwayat.asMap().entries.map((entry) {
             int idx = entry.key;
             var r = entry.value;
-            Color color = r['color'] as Color;
+            Color color = hexToColor(r['color']);
 
             return Container(
               padding: const EdgeInsets.symmetric(vertical: 12),
@@ -623,32 +655,54 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       children: [
                         Text(
                           r['mk'] as String,
-                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF1A1A2E)),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                            color: Color(0xFF1A1A2E),
+                          ),
                         ),
                         const SizedBox(height: 6),
                         Row(
                           children: [
-                            const Icon(Icons.calendar_today, size: 12, color: Colors.grey),
+                            const Icon(
+                              Icons.calendar_today,
+                              size: 12,
+                              color: Colors.grey,
+                            ),
                             const SizedBox(width: 4),
-                            Text(r['tgl'] as String, style: const TextStyle(fontSize: 12, color: Colors.grey)),
-                            const SizedBox(width: 12),
-                            const Icon(Icons.access_time, size: 12, color: Colors.grey),
-                            const SizedBox(width: 4),
-                            Text(r['waktu'] as String, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+
+                            Expanded(
+                              child: Text(
+                                '${r['tgl']} • ${r['waktu']}',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                            ),
                           ],
                         ),
                       ],
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: color.withOpacity(0.15),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
                       r['status'] as String,
-                      style: TextStyle(color: color, fontSize: 11, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        color: color,
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ],
@@ -689,8 +743,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
         Widget? targetPage;
         if (index == 0) targetPage = const DashboardScreen();
         if (index == 1) targetPage = const ListMatakuliahScreen();
+        if (index == 2) targetPage = const IzinScreen();
         if (index == 3) targetPage = const ProfilScreen();
-        
+
         if (targetPage != null) {
           Navigator.pushReplacement(
             context,
@@ -712,11 +767,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              icon,
-              color: isActive ? _maroon : Colors.grey,
-              size: 24,
-            ),
+            Icon(icon, color: isActive ? _maroon : Colors.grey, size: 24),
             const SizedBox(height: 4),
             Text(
               label,
@@ -767,7 +818,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(20),
+                  ),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -778,7 +831,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         SizedBox(width: 10),
                         Text(
                           'Ajukan Izin / Sakit',
-                          style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ],
                     ),
@@ -790,7 +847,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           color: Colors.white.withOpacity(0.2),
                           shape: BoxShape.circle,
                         ),
-                        child: const Icon(Icons.close, color: Colors.white, size: 20),
+                        child: const Icon(
+                          Icons.close,
+                          color: Colors.white,
+                          size: 20,
+                        ),
                       ),
                     ),
                   ],
@@ -801,47 +862,64 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Jenis Izin', style: TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF444444))),
+                    const Text(
+                      'Jenis Izin',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF444444),
+                      ),
+                    ),
                     const SizedBox(height: 8),
                     DropdownButtonFormField<String>(
                       decoration: InputDecoration(
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 14,
+                        ),
                       ),
                       value: 'Sakit',
-                      items: ['Sakit', 'Izin Keluarga', 'Kegiatan Kampus', 'Lainnya'].map((e) {
-                        return DropdownMenuItem(value: e, child: Text(e));
-                      }).toList(),
+                      items:
+                          [
+                            'Sakit',
+                            'Izin Keluarga',
+                            'Kegiatan Kampus',
+                            'Lainnya',
+                          ].map((e) {
+                            return DropdownMenuItem(value: e, child: Text(e));
+                          }).toList(),
                       onChanged: (val) {},
                     ),
                     const SizedBox(height: 20),
-                    const Text('Mata Kuliah', style: TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF444444))),
-                    const SizedBox(height: 8),
-                    DropdownButtonFormField<String>(
-                      decoration: InputDecoration(
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                    const Text(
+                      'Mata Kuliah',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF444444),
                       ),
-                      value: 'Algoritma & Pemrograman',
-                      items: [
-                        'Algoritma & Pemrograman',
-                        'Basis Data',
-                        'Rekayasa Perangkat Lunak',
-                        'Jaringan Komputer',
-                        'Sistem Operasi'
-                      ].map((e) {
-                        return DropdownMenuItem(value: e, child: Expanded(child: Text(e, overflow: TextOverflow.ellipsis)));
-                      }).toList(),
-                      isExpanded: true,
-                      onChanged: (val) {},
                     ),
+                    const SizedBox(height: 8),
+
                     const SizedBox(height: 20),
-                    const Text('Tanggal', style: TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF444444))),
+                    const Text(
+                      'Tanggal',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF444444),
+                      ),
+                    ),
                     const SizedBox(height: 8),
                     TextFormField(
                       decoration: InputDecoration(
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 14,
+                        ),
                         hintText: 'Pilih Tanggal',
                         suffixIcon: const Icon(Icons.calendar_today),
                       ),
@@ -856,12 +934,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       },
                     ),
                     const SizedBox(height: 20),
-                    const Text('Keterangan', style: TextStyle(fontWeight: FontWeight.w600, color: Color(0xFF444444))),
+                    const Text(
+                      'Keterangan',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: Color(0xFF444444),
+                      ),
+                    ),
                     const SizedBox(height: 8),
                     TextFormField(
                       maxLines: 3,
                       decoration: InputDecoration(
-                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
                         hintText: 'Jelaskan alasan izin Anda...',
                         contentPadding: const EdgeInsets.all(14),
                       ),
@@ -872,16 +958,30 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       height: 52,
                       child: ElevatedButton.icon(
                         icon: const Icon(Icons.send, color: Colors.white),
-                        label: const Text('Kirim Pengajuan', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                        label: const Text(
+                          'Kirim Pengajuan',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                        ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: _maroon,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
                           elevation: 2,
                         ),
                         onPressed: () {
                           Navigator.pop(context);
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Pengajuan izin berhasil dikirim! Menunggu persetujuan dosen.'), backgroundColor: Colors.green),
+                            const SnackBar(
+                              content: Text(
+                                'Pengajuan izin berhasil dikirim! Menunggu persetujuan dosen.',
+                              ),
+                              backgroundColor: Colors.green,
+                            ),
                           );
                         },
                       ),

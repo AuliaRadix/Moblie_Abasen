@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'dashboard.dart';
 import 'list_matakuliah.dart';
 import 'scan_qr.dart';
+import 'izin.dart';
 import 'services/session_manager.dart';
+import 'services/fixed_fab.dart';
 
 class ProfilScreen extends StatefulWidget {
   const ProfilScreen({super.key});
@@ -86,7 +88,7 @@ class _ProfilScreenState extends State<ProfilScreen> {
           ),
         ),
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      floatingActionButtonLocation: const FixedCenterDockedFabLocation(),
       bottomNavigationBar: _buildBottomNav(),
     );
   }
@@ -573,6 +575,7 @@ class _ProfilScreenState extends State<ProfilScreen> {
         Widget? targetPage;
         if (index == 0) targetPage = const DashboardScreen();
         if (index == 1) targetPage = const ListMatakuliahScreen();
+        if (index == 2) targetPage = const IzinScreen();
         if (index == 3) targetPage = const ProfilScreen();
         
         if (targetPage != null) {

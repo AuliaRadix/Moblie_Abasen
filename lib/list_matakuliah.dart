@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import 'dashboard.dart';
 import 'profil.dart';
 import 'scan_qr.dart';
+import 'izin.dart';
 import 'services/mahasiswa_service.dart';
 import 'services/session_manager.dart';
+import 'services/fixed_fab.dart';
 
 class ListMatakuliahScreen extends StatefulWidget {
   const ListMatakuliahScreen({super.key});
@@ -23,9 +25,8 @@ class _ListMatakuliahScreenState extends State<ListMatakuliahScreen> {
   final Color _maroonDark = const Color(0xFF5A0016);
   final Color _maroonLight = const Color(0xFFC0003A);
 
-  List<Map<String, dynamic>> get mkData => _session.matakuliahList
-      .map((mk) => mk.toUiMap())
-      .toList();
+  List<Map<String, dynamic>> get mkData =>
+      _session.matakuliahList.map((mk) => mk.toUiMap()).toList();
 
   static const List<Map<String, dynamic>> _fallbackMkData = [
     {
@@ -44,18 +45,43 @@ class _ListMatakuliahScreenState extends State<ListMatakuliahScreen> {
       'alpha': 1,
       'total': 16,
       'sessions': [
-        {'n': 1, 'tgl': '3 Feb 2026', 'topik': 'Pengantar Algoritma', 'status': 'hadir'},
-        {'n': 2, 'tgl': '10 Feb 2026', 'topik': 'Variabel & Tipe Data', 'status': 'hadir'},
-        {'n': 3, 'tgl': '17 Feb 2026', 'topik': 'Percabangan', 'status': 'hadir'},
+        {
+          'n': 1,
+          'tgl': '3 Feb 2026',
+          'topik': 'Pengantar Algoritma',
+          'status': 'hadir',
+        },
+        {
+          'n': 2,
+          'tgl': '10 Feb 2026',
+          'topik': 'Variabel & Tipe Data',
+          'status': 'hadir',
+        },
+        {
+          'n': 3,
+          'tgl': '17 Feb 2026',
+          'topik': 'Percabangan',
+          'status': 'hadir',
+        },
         {'n': 4, 'tgl': '24 Feb 2026', 'topik': 'Perulangan', 'status': 'izin'},
-        {'n': 5, 'tgl': '3 Mar 2026', 'topik': 'Fungsi & Prosedur', 'status': 'hadir'},
+        {
+          'n': 5,
+          'tgl': '3 Mar 2026',
+          'topik': 'Fungsi & Prosedur',
+          'status': 'hadir',
+        },
         {'n': 6, 'tgl': '10 Mar 2026', 'topik': 'Array', 'status': 'hadir'},
         {'n': 7, 'tgl': '17 Mar 2026', 'topik': 'Sorting', 'status': 'hadir'},
         {'n': 8, 'tgl': '24 Mar 2026', 'topik': 'UTS', 'status': 'hadir'},
         {'n': 9, 'tgl': '7 Apr 2026', 'topik': 'Rekursi', 'status': 'hadir'},
         {'n': 10, 'tgl': '14 Apr 2026', 'topik': 'Pointer', 'status': 'alpha'},
-        {'n': 11, 'tgl': '15 Apr 2026', 'topik': 'Linked List', 'status': 'hadir'},
-      ]
+        {
+          'n': 11,
+          'tgl': '15 Apr 2026',
+          'topik': 'Linked List',
+          'status': 'hadir',
+        },
+      ],
     },
     {
       'kode': 'MK002',
@@ -74,16 +100,41 @@ class _ListMatakuliahScreenState extends State<ListMatakuliahScreen> {
       'total': 16,
       'sessions': [
         {'n': 1, 'tgl': '4 Feb 2026', 'topik': 'ER Diagram', 'status': 'hadir'},
-        {'n': 2, 'tgl': '11 Feb 2026', 'topik': 'Normalisasi 1NF', 'status': 'hadir'},
-        {'n': 3, 'tgl': '18 Feb 2026', 'topik': 'Normalisasi 2NF', 'status': 'izin'},
+        {
+          'n': 2,
+          'tgl': '11 Feb 2026',
+          'topik': 'Normalisasi 1NF',
+          'status': 'hadir',
+        },
+        {
+          'n': 3,
+          'tgl': '18 Feb 2026',
+          'topik': 'Normalisasi 2NF',
+          'status': 'izin',
+        },
         {'n': 4, 'tgl': '25 Feb 2026', 'topik': 'SQL DDL', 'status': 'hadir'},
         {'n': 5, 'tgl': '4 Mar 2026', 'topik': 'SQL DML', 'status': 'hadir'},
-        {'n': 6, 'tgl': '11 Mar 2026', 'topik': 'JOIN Tables', 'status': 'hadir'},
+        {
+          'n': 6,
+          'tgl': '11 Mar 2026',
+          'topik': 'JOIN Tables',
+          'status': 'hadir',
+        },
         {'n': 7, 'tgl': '18 Mar 2026', 'topik': 'Subquery', 'status': 'alpha'},
         {'n': 8, 'tgl': '25 Mar 2026', 'topik': 'UTS', 'status': 'hadir'},
-        {'n': 9, 'tgl': '8 Apr 2026', 'topik': 'Index & View', 'status': 'hadir'},
-        {'n': 10, 'tgl': '15 Apr 2026', 'topik': 'Stored Procedure', 'status': 'izin'},
-      ]
+        {
+          'n': 9,
+          'tgl': '8 Apr 2026',
+          'topik': 'Index & View',
+          'status': 'hadir',
+        },
+        {
+          'n': 10,
+          'tgl': '15 Apr 2026',
+          'topik': 'Stored Procedure',
+          'status': 'izin',
+        },
+      ],
     },
     {
       'kode': 'MK003',
@@ -101,17 +152,57 @@ class _ListMatakuliahScreenState extends State<ListMatakuliahScreen> {
       'alpha': 3,
       'total': 16,
       'sessions': [
-        {'n': 1, 'tgl': '5 Feb 2026', 'topik': 'SDLC Overview', 'status': 'hadir'},
-        {'n': 2, 'tgl': '12 Feb 2026', 'topik': 'Requirement Analysis', 'status': 'hadir'},
-        {'n': 3, 'tgl': '19 Feb 2026', 'topik': 'UML Use Case', 'status': 'alpha'},
-        {'n': 4, 'tgl': '26 Feb 2026', 'topik': 'UML Class Diagram', 'status': 'hadir'},
-        {'n': 5, 'tgl': '5 Mar 2026', 'topik': 'Design Pattern', 'status': 'hadir'},
+        {
+          'n': 1,
+          'tgl': '5 Feb 2026',
+          'topik': 'SDLC Overview',
+          'status': 'hadir',
+        },
+        {
+          'n': 2,
+          'tgl': '12 Feb 2026',
+          'topik': 'Requirement Analysis',
+          'status': 'hadir',
+        },
+        {
+          'n': 3,
+          'tgl': '19 Feb 2026',
+          'topik': 'UML Use Case',
+          'status': 'alpha',
+        },
+        {
+          'n': 4,
+          'tgl': '26 Feb 2026',
+          'topik': 'UML Class Diagram',
+          'status': 'hadir',
+        },
+        {
+          'n': 5,
+          'tgl': '5 Mar 2026',
+          'topik': 'Design Pattern',
+          'status': 'hadir',
+        },
         {'n': 6, 'tgl': '12 Mar 2026', 'topik': 'Testing', 'status': 'alpha'},
-        {'n': 7, 'tgl': '19 Mar 2026', 'topik': 'Deployment', 'status': 'hadir'},
+        {
+          'n': 7,
+          'tgl': '19 Mar 2026',
+          'topik': 'Deployment',
+          'status': 'hadir',
+        },
         {'n': 8, 'tgl': '26 Mar 2026', 'topik': 'UTS', 'status': 'izin'},
-        {'n': 9, 'tgl': '9 Apr 2026', 'topik': 'Agile Scrum', 'status': 'hadir'},
-        {'n': 10, 'tgl': '14 Apr 2026', 'topik': 'Sprint Planning', 'status': 'alpha'},
-      ]
+        {
+          'n': 9,
+          'tgl': '9 Apr 2026',
+          'topik': 'Agile Scrum',
+          'status': 'hadir',
+        },
+        {
+          'n': 10,
+          'tgl': '14 Apr 2026',
+          'topik': 'Sprint Planning',
+          'status': 'alpha',
+        },
+      ],
     },
     {
       'kode': 'MK004',
@@ -131,13 +222,23 @@ class _ListMatakuliahScreenState extends State<ListMatakuliahScreen> {
       'sessions': [
         {'n': 1, 'tgl': '6 Feb 2026', 'topik': 'OSI Model', 'status': 'hadir'},
         {'n': 2, 'tgl': '13 Feb 2026', 'topik': 'TCP/IP', 'status': 'hadir'},
-        {'n': 3, 'tgl': '20 Feb 2026', 'topik': 'Subnetting', 'status': 'hadir'},
+        {
+          'n': 3,
+          'tgl': '20 Feb 2026',
+          'topik': 'Subnetting',
+          'status': 'hadir',
+        },
         {'n': 4, 'tgl': '27 Feb 2026', 'topik': 'Routing', 'status': 'hadir'},
         {'n': 5, 'tgl': '6 Mar 2026', 'topik': 'Switching', 'status': 'hadir'},
-        {'n': 6, 'tgl': '13 Mar 2026', 'topik': 'Wireless LAN', 'status': 'alpha'},
+        {
+          'n': 6,
+          'tgl': '13 Mar 2026',
+          'topik': 'Wireless LAN',
+          'status': 'alpha',
+        },
         {'n': 7, 'tgl': '20 Mar 2026', 'topik': 'Firewall', 'status': 'hadir'},
         {'n': 8, 'tgl': '27 Mar 2026', 'topik': 'UTS', 'status': 'hadir'},
-      ]
+      ],
     },
     {
       'kode': 'MK005',
@@ -156,16 +257,51 @@ class _ListMatakuliahScreenState extends State<ListMatakuliahScreen> {
       'total': 16,
       'sessions': [
         {'n': 1, 'tgl': '7 Feb 2026', 'topik': 'Intro OS', 'status': 'hadir'},
-        {'n': 2, 'tgl': '14 Feb 2026', 'topik': 'Process Management', 'status': 'hadir'},
+        {
+          'n': 2,
+          'tgl': '14 Feb 2026',
+          'topik': 'Process Management',
+          'status': 'hadir',
+        },
         {'n': 3, 'tgl': '21 Feb 2026', 'topik': 'Threading', 'status': 'alpha'},
-        {'n': 4, 'tgl': '28 Feb 2026', 'topik': 'Scheduling', 'status': 'hadir'},
-        {'n': 5, 'tgl': '7 Mar 2026', 'topik': 'Memory Management', 'status': 'alpha'},
-        {'n': 6, 'tgl': '14 Mar 2026', 'topik': 'Virtual Memory', 'status': 'izin'},
-        {'n': 7, 'tgl': '21 Mar 2026', 'topik': 'File System', 'status': 'hadir'},
+        {
+          'n': 4,
+          'tgl': '28 Feb 2026',
+          'topik': 'Scheduling',
+          'status': 'hadir',
+        },
+        {
+          'n': 5,
+          'tgl': '7 Mar 2026',
+          'topik': 'Memory Management',
+          'status': 'alpha',
+        },
+        {
+          'n': 6,
+          'tgl': '14 Mar 2026',
+          'topik': 'Virtual Memory',
+          'status': 'izin',
+        },
+        {
+          'n': 7,
+          'tgl': '21 Mar 2026',
+          'topik': 'File System',
+          'status': 'hadir',
+        },
         {'n': 8, 'tgl': '28 Mar 2026', 'topik': 'UTS', 'status': 'izin'},
-        {'n': 9, 'tgl': '11 Apr 2026', 'topik': 'I/O System', 'status': 'hadir'},
-        {'n': 10, 'tgl': '14 Apr 2026', 'topik': 'Security OS', 'status': 'alpha'},
-      ]
+        {
+          'n': 9,
+          'tgl': '11 Apr 2026',
+          'topik': 'I/O System',
+          'status': 'hadir',
+        },
+        {
+          'n': 10,
+          'tgl': '14 Apr 2026',
+          'topik': 'Security OS',
+          'status': 'alpha',
+        },
+      ],
     },
   ];
 
@@ -204,7 +340,9 @@ class _ListMatakuliahScreenState extends State<ListMatakuliahScreen> {
       body: Stack(
         children: [
           SingleChildScrollView(
-            padding: const EdgeInsets.only(bottom: 90), // Spacing for bottom nav
+            padding: const EdgeInsets.only(
+              bottom: 90,
+            ), // Spacing for bottom nav
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -215,17 +353,23 @@ class _ListMatakuliahScreenState extends State<ListMatakuliahScreen> {
                       ? const Center(
                           child: Padding(
                             padding: EdgeInsets.all(32),
-                            child: CircularProgressIndicator(color: Color(0xFF800020)),
+                            child: CircularProgressIndicator(
+                              color: Color(0xFF800020),
+                            ),
                           ),
                         )
                       : Column(
-                          children: (_errorMessage != null && mkData.isEmpty
-                                  ? _fallbackMkData
-                                  : mkData)
-                              .asMap()
-                              .entries
-                              .map((entry) => _buildMkCard(entry.value, entry.key))
-                              .toList(),
+                          children:
+                              (_errorMessage != null && mkData.isEmpty
+                                      ? _fallbackMkData
+                                      : mkData)
+                                  .asMap()
+                                  .entries
+                                  .map(
+                                    (entry) =>
+                                        _buildMkCard(entry.value, entry.key),
+                                  )
+                                  .toList(),
                         ),
                 ),
               ],
@@ -239,7 +383,10 @@ class _ListMatakuliahScreenState extends State<ListMatakuliahScreen> {
         margin: const EdgeInsets.only(top: 30),
         child: FloatingActionButton(
           onPressed: () {
-            Navigator.push(context, MaterialPageRoute(builder: (context) => const ScanQrScreen()));
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const ScanQrScreen()),
+            );
           },
           backgroundColor: Colors.transparent,
           elevation: 0,
@@ -256,7 +403,7 @@ class _ListMatakuliahScreenState extends State<ListMatakuliahScreen> {
                   color: _maroon.withOpacity(0.4),
                   blurRadius: 16,
                   offset: const Offset(0, 4),
-                )
+                ),
               ],
               border: Border.all(color: Colors.white, width: 4),
             ),
@@ -266,7 +413,7 @@ class _ListMatakuliahScreenState extends State<ListMatakuliahScreen> {
           ),
         ),
       ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+      floatingActionButtonLocation: const FixedCenterDockedFabLocation(),
       bottomNavigationBar: _buildBottomNav(),
     );
   }
@@ -308,7 +455,9 @@ class _ListMatakuliahScreenState extends State<ListMatakuliahScreen> {
                         onTap: () {
                           Navigator.pushReplacement(
                             context,
-                            MaterialPageRoute(builder: (context) => const DashboardScreen()),
+                            MaterialPageRoute(
+                              builder: (context) => const DashboardScreen(),
+                            ),
                           );
                         },
                         child: Container(
@@ -318,7 +467,11 @@ class _ListMatakuliahScreenState extends State<ListMatakuliahScreen> {
                             color: Colors.white.withOpacity(0.15),
                             shape: BoxShape.circle,
                           ),
-                          child: const Icon(Icons.arrow_back, color: Colors.white, size: 20),
+                          child: const Icon(
+                            Icons.arrow_back,
+                            color: Colors.white,
+                            size: 20,
+                          ),
                         ),
                       ),
                       const SizedBox(width: 12),
@@ -345,32 +498,41 @@ class _ListMatakuliahScreenState extends State<ListMatakuliahScreen> {
                     ],
                   ),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.15),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: const Text(
                       '5 MK',
-                      style: TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ],
               ),
               const SizedBox(height: 20),
               Container(
-                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 12,
+                  horizontal: 16,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.12),
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    _buildStatItem('5', 'Mata Kuliah'),
-                    _buildStatItem('14', 'SKS Total'),
-                    _buildStatItem('87%', 'Rata-rata Hadir'),
-                    _buildStatItem('16', 'Pertemuan/MK'),
+                    Expanded(child: _buildStatItem('5', 'Mata Kuliah')),
+                    Expanded(child: _buildStatItem('14', 'SKS Total')),
+                    Expanded(child: _buildStatItem('87%', 'Rata-rata')),
+                    Expanded(child: _buildStatItem('16', 'Pertemuan')),
                   ],
                 ),
               ),
@@ -395,22 +557,25 @@ class _ListMatakuliahScreenState extends State<ListMatakuliahScreen> {
         const SizedBox(height: 4),
         Text(
           lbl,
-          style: TextStyle(
-            color: Colors.white.withOpacity(0.7),
-            fontSize: 10,
-          ),
+          style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 10),
         ),
       ],
     );
   }
-  
+
   Widget _buildMkCard(Map<String, dynamic> mk, int index) {
-    int hadir = mk['hadir'] as int;
-    int total = mk['total'] as int;
-    double pctDouble = hadir / total;
+    print(mk);
+    int hadir = (mk['hadir'] ?? 0) as int;
+    int total = (mk['total'] ?? 0) as int;
+
+    double pctDouble = total <= 0 ? 0.0 : hadir / total;
     int pct = (pctDouble * 100).round();
-    
-    Color barColor = pct >= 80 ? const Color(0xFF198754) : pct >= 60 ? const Color(0xFFFD7E14) : const Color(0xFFDC3545);
+
+    Color barColor = pct >= 80
+        ? const Color(0xFF198754)
+        : pct >= 60
+        ? const Color(0xFFFD7E14)
+        : const Color(0xFFDC3545);
     Color mkColor = mk['color'] as Color;
 
     return Container(
@@ -453,7 +618,11 @@ class _ListMatakuliahScreenState extends State<ListMatakuliahScreen> {
                         color: mkColor.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(11),
                       ),
-                      child: Icon(mk['icon'] as IconData, color: mkColor, size: 24),
+                      child: Icon(
+                        mk['icon'] as IconData,
+                        color: mkColor,
+                        size: 24,
+                      ),
                     ),
                     const SizedBox(width: 12),
                     Expanded(
@@ -462,21 +631,37 @@ class _ListMatakuliahScreenState extends State<ListMatakuliahScreen> {
                         children: [
                           Text(
                             mk['kode'] as String,
-                            style: TextStyle(color: mkColor, fontWeight: FontWeight.bold, fontSize: 11, letterSpacing: 0.8),
+                            style: TextStyle(
+                              color: mkColor,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 11,
+                              letterSpacing: 0.8,
+                            ),
                           ),
                           const SizedBox(height: 4),
                           Text(
                             mk['nama'] as String,
-                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15, color: Color(0xFF1A1A2E)),
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                              color: Color(0xFF1A1A2E),
+                            ),
                           ),
                           const SizedBox(height: 4),
                           Row(
                             children: [
-                              const Icon(Icons.person, size: 14, color: Colors.grey),
+                              const Icon(
+                                Icons.person,
+                                size: 14,
+                                color: Colors.grey,
+                              ),
                               const SizedBox(width: 4),
                               Text(
                                 mk['dosen'] as String,
-                                style: const TextStyle(color: Colors.grey, fontSize: 12),
+                                style: const TextStyle(
+                                  color: Colors.grey,
+                                  fontSize: 12,
+                                ),
                               ),
                             ],
                           ),
@@ -493,7 +678,10 @@ class _ListMatakuliahScreenState extends State<ListMatakuliahScreen> {
                   runSpacing: 8,
                   children: [
                     _buildTag(Icons.workspace_premium, '${mk['sks']} SKS'),
-                    _buildTag(Icons.calendar_today, '${mk['hari']}, ${mk['jam']}'),
+                    _buildTag(
+                      Icons.calendar_today,
+                      '${mk['hari']}, ${mk['jam']}',
+                    ),
                     _buildTag(Icons.location_on, mk['ruang'] as String),
                     _buildTag(Icons.people, 'Kelas ${mk['kelas']}'),
                   ],
@@ -501,7 +689,10 @@ class _ListMatakuliahScreenState extends State<ListMatakuliahScreen> {
               ),
               const SizedBox(height: 12),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
                 decoration: BoxDecoration(
                   border: Border(top: BorderSide(color: Colors.grey.shade100)),
                 ),
@@ -514,10 +705,20 @@ class _ListMatakuliahScreenState extends State<ListMatakuliahScreen> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              const Text('Kehadiran', style: TextStyle(fontSize: 11, color: Colors.grey)),
+                              const Text(
+                                'Kehadiran',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: Colors.grey,
+                                ),
+                              ),
                               Text(
                                 '$hadir/$total ($pct%)',
-                                style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: barColor),
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.bold,
+                                  color: barColor,
+                                ),
                               ),
                             ],
                           ),
@@ -533,7 +734,11 @@ class _ListMatakuliahScreenState extends State<ListMatakuliahScreen> {
                       ),
                     ),
                     const SizedBox(width: 16),
-                    const Icon(Icons.chevron_right, color: Colors.grey, size: 20),
+                    const Icon(
+                      Icons.chevron_right,
+                      color: Colors.grey,
+                      size: 20,
+                    ),
                   ],
                 ),
               ),
@@ -556,7 +761,10 @@ class _ListMatakuliahScreenState extends State<ListMatakuliahScreen> {
         children: [
           Icon(icon, size: 12, color: const Color(0xFF555555)),
           const SizedBox(width: 4),
-          Text(label, style: const TextStyle(fontSize: 11, color: Color(0xFF555555))),
+          Text(
+            label,
+            style: const TextStyle(fontSize: 11, color: Color(0xFF555555)),
+          ),
         ],
       ),
     );
@@ -607,7 +815,11 @@ class _ListMatakuliahScreenState extends State<ListMatakuliahScreen> {
                               color: mkColor.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(14),
                             ),
-                            child: Icon(mk['icon'] as IconData, color: mkColor, size: 30),
+                            child: Icon(
+                              mk['icon'] as IconData,
+                              color: mkColor,
+                              size: 30,
+                            ),
                           ),
                           const SizedBox(width: 16),
                           Expanded(
@@ -616,17 +828,29 @@ class _ListMatakuliahScreenState extends State<ListMatakuliahScreen> {
                               children: [
                                 Text(
                                   mk['kode'] as String,
-                                  style: TextStyle(color: mkColor, fontWeight: FontWeight.bold, fontSize: 12, letterSpacing: 0.8),
+                                  style: TextStyle(
+                                    color: mkColor,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12,
+                                    letterSpacing: 0.8,
+                                  ),
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
                                   mk['nama'] as String,
-                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Color(0xFF1A1A2E)),
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 18,
+                                    color: Color(0xFF1A1A2E),
+                                  ),
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
                                   '${mk['dosen']} · ${mk['hari']}, ${mk['jam']}',
-                                  style: const TextStyle(color: Colors.grey, fontSize: 13),
+                                  style: const TextStyle(
+                                    color: Colors.grey,
+                                    fontSize: 13,
+                                  ),
                                 ),
                               ],
                             ),
@@ -637,33 +861,75 @@ class _ListMatakuliahScreenState extends State<ListMatakuliahScreen> {
                       // Stats Row
                       Row(
                         children: [
-                          Expanded(child: _buildDetailStat('${mk['hadir']}', 'Hadir', const Color(0xFF198754))),
+                          Expanded(
+                            child: _buildDetailStat(
+                              '${mk['hadir']}',
+                              'Hadir',
+                              const Color(0xFF198754),
+                            ),
+                          ),
                           const SizedBox(width: 12),
-                          Expanded(child: _buildDetailStat('${mk['izin']}', 'Izin', const Color(0xFFFD7E14))),
+                          Expanded(
+                            child: _buildDetailStat(
+                              '${mk['izin']}',
+                              'Izin',
+                              const Color(0xFFFD7E14),
+                            ),
+                          ),
                           const SizedBox(width: 12),
-                          Expanded(child: _buildDetailStat('${mk['alpha']}', 'Alpha', const Color(0xFFDC3545))),
+                          Expanded(
+                            child: _buildDetailStat(
+                              '${mk['alpha']}',
+                              'Alpha',
+                              const Color(0xFFDC3545),
+                            ),
+                          ),
                           const SizedBox(width: 12),
-                          Expanded(child: _buildDetailStat('$pct%', 'Kehadiran', _maroon)),
+                          Expanded(
+                            child: _buildDetailStat(
+                              '$pct%',
+                              'Kehadiran',
+                              _maroon,
+                            ),
+                          ),
                         ],
                       ),
                       const SizedBox(height: 24),
                       const Text(
                         'Riwayat Pertemuan',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF1A1A2E)),
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                          color: Color(0xFF1A1A2E),
+                        ),
                       ),
                       const SizedBox(height: 12),
                       // Sessions
-                      ...List.generate((mk['sessions'] as List).length, (index) {
+                      ...List.generate((mk['sessions'] as List).length, (
+                        index,
+                      ) {
                         var s = mk['sessions'][index];
                         String status = s['status'] as String;
-                        Color statusColor = status == 'hadir' ? const Color(0xFF198754) : status == 'izin' ? const Color(0xFFFD7E14) : const Color(0xFFDC3545);
-                        String statusLabel = status == 'hadir' ? 'Hadir' : status == 'izin' ? 'Izin' : 'Alpha';
+                        Color statusColor = status == 'hadir'
+                            ? const Color(0xFF198754)
+                            : status == 'izin'
+                            ? const Color(0xFFFD7E14)
+                            : const Color(0xFFDC3545);
+                        String statusLabel = status == 'hadir'
+                            ? 'Hadir'
+                            : status == 'izin'
+                            ? 'Izin'
+                            : 'Alpha';
 
                         return Container(
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           decoration: BoxDecoration(
                             border: index < (mk['sessions'] as List).length - 1
-                                ? Border(bottom: BorderSide(color: Colors.grey.shade100))
+                                ? Border(
+                                    bottom: BorderSide(
+                                      color: Colors.grey.shade100,
+                                    ),
+                                  )
                                 : null,
                           ),
                           child: Row(
@@ -678,7 +944,11 @@ class _ListMatakuliahScreenState extends State<ListMatakuliahScreen> {
                                 child: Center(
                                   child: Text(
                                     '${s['n']}',
-                                    style: TextStyle(color: statusColor, fontWeight: FontWeight.bold, fontSize: 12),
+                                    style: TextStyle(
+                                      color: statusColor,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 12,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -689,25 +959,39 @@ class _ListMatakuliahScreenState extends State<ListMatakuliahScreen> {
                                   children: [
                                     Text(
                                       s['topik'] as String,
-                                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF333333)),
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 13,
+                                        color: Color(0xFF333333),
+                                      ),
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
                                       s['tgl'] as String,
-                                      style: const TextStyle(color: Colors.grey, fontSize: 11),
+                                      style: const TextStyle(
+                                        color: Colors.grey,
+                                        fontSize: 11,
+                                      ),
                                     ),
                                   ],
                                 ),
                               ),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 4,
+                                ),
                                 decoration: BoxDecoration(
                                   color: statusColor.withOpacity(0.12),
                                   borderRadius: BorderRadius.circular(20),
                                 ),
                                 child: Text(
                                   statusLabel,
-                                  style: TextStyle(color: statusColor, fontSize: 11, fontWeight: FontWeight.bold),
+                                  style: TextStyle(
+                                    color: statusColor,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ),
                             ],
@@ -736,13 +1020,14 @@ class _ListMatakuliahScreenState extends State<ListMatakuliahScreen> {
         children: [
           Text(
             val,
-            style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 22),
+            style: TextStyle(
+              color: color,
+              fontWeight: FontWeight.bold,
+              fontSize: 22,
+            ),
           ),
           const SizedBox(height: 4),
-          Text(
-            lbl,
-            style: const TextStyle(color: Colors.grey, fontSize: 11),
-          ),
+          Text(lbl, style: const TextStyle(color: Colors.grey, fontSize: 11)),
         ],
       ),
     );
@@ -777,8 +1062,9 @@ class _ListMatakuliahScreenState extends State<ListMatakuliahScreen> {
         Widget? targetPage;
         if (index == 0) targetPage = const DashboardScreen();
         if (index == 1) targetPage = const ListMatakuliahScreen();
+        if (index == 2) targetPage = const IzinScreen();
         if (index == 3) targetPage = const ProfilScreen();
-        
+
         if (targetPage != null) {
           Navigator.pushReplacement(
             context,
@@ -800,11 +1086,7 @@ class _ListMatakuliahScreenState extends State<ListMatakuliahScreen> {
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              icon,
-              color: isActive ? _maroon : Colors.grey,
-              size: 24,
-            ),
+            Icon(icon, color: isActive ? _maroon : Colors.grey, size: 24),
             const SizedBox(height: 4),
             Text(
               label,
