@@ -58,4 +58,42 @@ class UserSession {
       totalSks: totalSks ?? this.totalSks,
     );
   }
+
+  factory UserSession.fromJson(Map<String, dynamic> json) {
+    return UserSession(
+      nama: json['nama']?.toString() ?? 'Mahasiswa',
+      nim: json['nim']?.toString() ?? '-',
+      prodi: json['prodi']?.toString(),
+      email: json['email']?.toString(),
+      kehadiranPersen: (json['kehadiran'] is num)
+          ? (json['kehadiran'] as num).toDouble()
+          : double.tryParse(json['kehadiran']?.toString() ?? ''),
+      totalHadir: json['total_hadir'] is int
+          ? json['total_hadir']
+          : int.tryParse('${json['total_hadir'] ?? 0}'),
+      totalIzin: json['total_izin'] is int
+          ? json['total_izin']
+          : int.tryParse('${json['total_izin'] ?? 0}'),
+      totalAlpha: json['total_alpha'] is int
+          ? json['total_alpha']
+          : int.tryParse('${json['total_alpha'] ?? 0}'),
+      totalSks: json['total_sks'] is int
+          ? json['total_sks']
+          : int.tryParse('${json['total_sks'] ?? 0}'),
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'nama': nama,
+      'nim': nim,
+      'prodi': prodi,
+      'email': email,
+      'kehadiran': kehadiranPersen,
+      'total_hadir': totalHadir,
+      'total_izin': totalIzin,
+      'total_alpha': totalAlpha,
+      'total_sks': totalSks,
+    };
+  }
 }

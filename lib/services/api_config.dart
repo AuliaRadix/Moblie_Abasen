@@ -16,10 +16,15 @@ class ApiConfig {
   static const String mahasiswaScanQr = '/mahasiswa/scan_qr';
   static String mahasiswaScanToken(String token) => '/mahasiswa/scan/$token';
   static const String mahasiswaScanProcess = '/mahasiswa/scan/process';
-static const String mahasiswaMatakuliahApi = '/mahasiswa/list_matakuliah/api';
+  static const String mahasiswaMatakuliahApi = '/mahasiswa/list_matakuliah/api';
+  static const String mahasiswaDashboardApi = '/mahasiswa/dashboard/api';
+  static const String mahasiswaProfileApi = '/mahasiswa/profile/api';
   // PresensiController (jika route /absen terdaftar di web.php)
   static const String absenForm = '/absen';
   static const String absenStore = '/absen';
+  // Izin endpoints
+  static const String mahasiswaIzinApi = '/mahasiswa/izin/api';
+  static String mahasiswaIzinDelete(int id) => '/mahasiswa/izin/api/$id';
 
   static const String profileEdit = '/profile';
 }

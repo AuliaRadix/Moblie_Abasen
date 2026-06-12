@@ -1,6 +1,4 @@
 import 'package:flutter/material.dart';
-import 'dart:convert';
-import 'package:http/http.dart' as http;
 import 'services/api_config.dart';
 import 'list_matakuliah.dart';
 import 'profil.dart';
@@ -19,6 +17,9 @@ class DashboardScreen extends StatefulWidget {
 
 class _DashboardScreenState extends State<DashboardScreen> {
   Map<String, dynamic>? dashboardData;
+  bool _isLoading = true;
+  String? _errorMessage;
+
   @override
   void initState() {
     super.initState();
@@ -27,27 +28,29 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Color hexToColor(String hex) {
     hex = hex.replaceAll('#', '');
-
     if (hex.length == 6) {
       hex = 'FF$hex';
     }
-
     return Color(int.parse(hex, radix: 16));
   }
 
   Future<void> loadDashboard() async {
     try {
       final response = await ApiService.instance.get(
-        '/mahasiswa/dashboard/api',
+        ApiConfig.mahasiswaDashboardApi,
       );
-
       if (!mounted) return;
-
       setState(() {
         dashboardData = response.data;
+        _isLoading = false;
       });
     } catch (e) {
       print(e);
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _errorMessage = e.toString();
+      });
     }
   }
 
@@ -64,32 +67,62 @@ class _DashboardScreenState extends State<DashboardScreen> {
       backgroundColor: const Color(0xFFF4F6F9),
       body: Stack(
         children: [
-          SingleChildScrollView(
-            padding: const EdgeInsets.only(
-              bottom: 90,
-            ), // Spacing for bottom nav
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                _buildTopHeader(),
-                _buildSummaryStrip(),
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const SizedBox(height: 20),
-                      _buildKehadiranPerMK(),
-                      const SizedBox(height: 20),
-                      _buildStatusIzin(),
-                      const SizedBox(height: 20),
-                      _buildRiwayatPresensi(),
-                    ],
-                  ),
+          if (_isLoading)
+            const Center(
+              child: CircularProgressIndicator(color: Color(0xFF800020)),
+            )
+          else if (_errorMessage != null)
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.all(32),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.error_outline,
+                        size: 48, color: Colors.grey.shade400),
+                    const SizedBox(height: 12),
+                    Text(_errorMessage!,
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: Colors.grey.shade600)),
+                    const SizedBox(height: 16),
+                    ElevatedButton.icon(
+                      onPressed: loadDashboard,
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Coba Lagi'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _maroon,
+                        foregroundColor: Colors.white,
+                      ),
+                    ),
+                  ],
                 ),
-              ],
+              ),
+            )
+          else
+            SingleChildScrollView(
+              padding: const EdgeInsets.only(bottom: 90),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  _buildTopHeader(),
+                  _buildSummaryStrip(),
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const SizedBox(height: 20),
+                        _buildKehadiranPerMK(),
+                        const SizedBox(height: 20),
+                        _buildStatusIzin(),
+                        const SizedBox(height: 20),
+                        _buildRiwayatPresensi(),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
         ],
       ),
       floatingActionButton: Container(
@@ -201,7 +234,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             ),
                           ),
                           Text(
-                            dashboardData?['mahasiswa']?['nama'] ?? 'Mahasiswa',
+                            _session.user?.nama ?? 'Mahasiswa',
                             style: const TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
@@ -231,11 +264,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       fit: StackFit.expand,
                       children: [
                         CircularProgressIndicator(
-                          value:
-                              (dashboardData?['attendancePercentage'] ??
-                                  0 ??
-                                  0) /
-                              100,
+                          value: ((dashboardData?['attendancePercentage'] ?? 0) as num) / 100,
                           strokeWidth: 8,
                           backgroundColor: Colors.white.withOpacity(0.15),
                           color: const Color(0xFFFFD700),
@@ -283,7 +312,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         const SizedBox(height: 4),
                         Text(
                           '${dashboardData?['attendancePercentage'] ?? 0}%',
-
                           style: const TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.bold,
@@ -314,73 +342,86 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget _buildSummaryStrip() {
     return Container(
       color: Colors.white,
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(
-          children: [
-            _buildSummaryPill(
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
+      child: Row(
+        children: [
+          Expanded(
+            child: _buildSummaryPill(
               '${dashboardData?['totalMatakuliah'] ?? 0}',
-              'Mata Kuliah',
+              'MK',
               _maroon,
             ),
-
-            _buildSummaryPill(
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: _buildSummaryPill(
               '${dashboardData?['hadirCount'] ?? 0}',
               'Hadir',
               const Color(0xFF198754),
             ),
-
-            _buildSummaryPill(
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: _buildSummaryPill(
               '${dashboardData?['izinCount'] ?? 0}',
               'Izin',
               const Color(0xFFFD7E14),
             ),
-
-            _buildSummaryPill(
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: _buildSummaryPill(
               '${dashboardData?['absenCount'] ?? 0}',
               'Alpha',
               const Color(0xFFDC3545),
             ),
-
-            _buildSummaryPill(
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: _buildSummaryPill(
               '${dashboardData?['totalSks'] ?? 0}',
-              'SKS Total',
+              'SKS',
               const Color(0xFF0D6EFD),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildSummaryPill(String value, String label, Color color) {
     return Container(
-      margin: const EdgeInsets.only(right: 12),
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
       decoration: BoxDecoration(
         color: const Color(0xFFF4F6F9),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(12),
       ),
-      child: Column(
-        children: [
-          Text(
-            value,
-            style: TextStyle(
-              color: color,
-              fontWeight: FontWeight.bold,
-              fontSize: 18,
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              value,
+              maxLines: 1,
+              style: TextStyle(
+                color: color,
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
             ),
-          ),
-          Text(
-            label,
-            style: const TextStyle(
-              color: Colors.grey,
-              fontSize: 11,
-              fontWeight: FontWeight.w500,
+            const SizedBox(height: 2),
+            Text(
+              label,
+              maxLines: 1,
+              style: const TextStyle(
+                color: Colors.grey,
+                fontSize: 10,
+                fontWeight: FontWeight.w500,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -419,54 +460,65 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ],
           ),
           const SizedBox(height: 16),
-          ...mkList.map((mk) {
-            int hadir = mk['hadir'] as int;
-            int total = mk['total'] as int;
-            Color color = hexToColor(mk['color']);
-            double pct = hadir / total;
-            int pctInt = (pct * 100).round();
+          if (mkList.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 16),
+              child: Center(
+                child: Text(
+                  'Belum ada data kehadiran.',
+                  style: TextStyle(color: Colors.grey, fontSize: 13),
+                ),
+              ),
+            )
+          else
+            ...mkList.map((mk) {
+              int hadir = (mk['hadir'] as num?)?.toInt() ?? 0;
+              int total = (mk['total'] as num?)?.toInt() ?? 0;
+              Color color = hexToColor(mk['color']?.toString() ?? '#800020');
+              double pct = total <= 0 ? 0 : hadir / total;
+              int pctInt = (pct * 100).round();
 
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 14),
-              child: Column(
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          mk['nama'] as String,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 13,
-                            color: Color(0xFF333333),
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 14),
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            mk['nama']?.toString() ?? '-',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w600,
+                              fontSize: 13,
+                              color: Color(0xFF333333),
+                            ),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        '$hadir/$total ($pctInt%)',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
-                          color: color,
+                        const SizedBox(width: 8),
+                        Text(
+                          '$hadir/$total ($pctInt%)',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                            color: color,
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  LinearProgressIndicator(
-                    value: pct,
-                    backgroundColor: Colors.grey.shade200,
-                    color: color,
-                    minHeight: 8,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ],
-              ),
-            );
-          }),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    LinearProgressIndicator(
+                      value: pct,
+                      backgroundColor: Colors.grey.shade200,
+                      color: color,
+                      minHeight: 8,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ],
+                ),
+              );
+            }),
         ],
       ),
     );
@@ -474,7 +526,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _buildStatusIzin() {
     final izinData = dashboardData?['izinData'] ?? [];
-    print(dashboardData);
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -507,77 +558,88 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ],
           ),
           const SizedBox(height: 16),
-          ...izinData.map((iz) {
-            Color color = hexToColor(iz['color']);
-            bool disetujui = iz['status'] == 'Disetujui';
-
-            return Container(
-              margin: const EdgeInsets.only(bottom: 12),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                color: disetujui
-                    ? const Color(0xFF198754).withOpacity(0.06)
-                    : const Color(0xFFFD7E14).withOpacity(0.06),
-                border: Border.all(color: color.withOpacity(0.2)),
-                borderRadius: BorderRadius.circular(12),
+          if (izinData.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 16),
+              child: Center(
+                child: Text(
+                  'Belum ada pengajuan izin.',
+                  style: TextStyle(color: Colors.grey, fontSize: 13),
+                ),
               ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: color.withOpacity(0.12),
-                      borderRadius: BorderRadius.circular(12),
+            )
+          else
+            ...izinData.map((iz) {
+              Color color = hexToColor(iz['color']?.toString() ?? '#FD7E14');
+              bool disetujui = iz['status']?.toString() == 'Disetujui';
+
+              return Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: disetujui
+                      ? const Color(0xFF198754).withOpacity(0.06)
+                      : const Color(0xFFFD7E14).withOpacity(0.06),
+                  border: Border.all(color: color.withOpacity(0.2)),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: color.withOpacity(0.12),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(Icons.description, color: color, size: 22),
                     ),
-                    child: Icon(Icons.description, color: color, size: 22),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          iz['mk'] as String,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 13,
-                            color: Color(0xFF1A1A2E),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            iz['mk']?.toString() ?? '-',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                              color: Color(0xFF1A1A2E),
+                            ),
                           ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          '${iz['jenis']} · ${iz['tgl']}',
-                          style: const TextStyle(
-                            color: Colors.grey,
-                            fontSize: 12,
+                          const SizedBox(height: 4),
+                          Text(
+                            '${iz['jenis']?.toString() ?? '-'} · ${iz['tgl']?.toString() ?? '-'}',
+                            style: const TextStyle(
+                              color: Colors.grey,
+                              fontSize: 12,
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: color.withOpacity(0.15),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      iz['status'] as String,
-                      style: TextStyle(
-                        color: color,
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
+                        ],
                       ),
                     ),
-                  ),
-                ],
-              ),
-            );
-          }),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: color.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        iz['status']?.toString() ?? '-',
+                        style: TextStyle(
+                          color: color,
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
         ],
       ),
     );
@@ -617,89 +679,99 @@ class _DashboardScreenState extends State<DashboardScreen> {
             ],
           ),
           const SizedBox(height: 16),
-          ...riwayat.asMap().entries.map((entry) {
-            int idx = entry.key;
-            var r = entry.value;
-            Color color = hexToColor(r['color']);
-
-            return Container(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              decoration: BoxDecoration(
-                border: idx < riwayat.length - 1
-                    ? Border(bottom: BorderSide(color: Colors.grey.shade100))
-                    : null,
+          if (riwayat.isEmpty)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 16),
+              child: Center(
+                child: Text(
+                  'Belum ada riwayat presensi.',
+                  style: TextStyle(color: Colors.grey, fontSize: 13),
+                ),
               ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 10,
-                    height: 10,
-                    decoration: BoxDecoration(
-                      color: color,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          r['mk'] as String,
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 13,
-                            color: Color(0xFF1A1A2E),
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Row(
-                          children: [
-                            const Icon(
-                              Icons.calendar_today,
-                              size: 12,
-                              color: Colors.grey,
-                            ),
-                            const SizedBox(width: 4),
+            )
+          else
+            ...riwayat.asMap().entries.map((entry) {
+              int idx = entry.key;
+              var r = entry.value;
+              Color color = hexToColor(r['color']?.toString() ?? '#198754');
 
-                            Expanded(
-                              child: Text(
-                                '${r['tgl']} • ${r['waktu']}',
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: color.withOpacity(0.15),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Text(
-                      r['status'] as String,
-                      style: TextStyle(
+              return Container(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                decoration: BoxDecoration(
+                  border: idx < riwayat.length - 1
+                      ? Border(bottom: BorderSide(color: Colors.grey.shade100))
+                      : null,
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 10,
+                      height: 10,
+                      decoration: BoxDecoration(
                         color: color,
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
+                        shape: BoxShape.circle,
                       ),
                     ),
-                  ),
-                ],
-              ),
-            );
-          }),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            r['mk']?.toString() ?? '-',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 13,
+                              color: Color(0xFF1A1A2E),
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Row(
+                            children: [
+                              const Icon(
+                                Icons.calendar_today,
+                                size: 12,
+                                color: Colors.grey,
+                              ),
+                              const SizedBox(width: 4),
+                              Expanded(
+                                child: Text(
+                                  '${r['tgl']?.toString() ?? '-'} · ${r['waktu']?.toString() ?? '-'}',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: color.withOpacity(0.15),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        r['status']?.toString() ?? '-',
+                        style: TextStyle(
+                          color: color,
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }),
         ],
       ),
     );
@@ -713,13 +785,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
       child: SizedBox(
         height: 65,
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            _buildNavItem(Icons.home, 'Beranda', 0),
-            _buildNavItem(Icons.menu_book, 'Mata Kuliah', 1),
-            const SizedBox(width: 48), // Space for FAB
-            _buildNavItem(Icons.description, 'Izin', 2),
-            _buildNavItem(Icons.person, 'Profil', 3),
+            Expanded(child: _buildNavItem(Icons.home, 'Beranda', 0)),
+            Expanded(child: _buildNavItem(Icons.menu_book, 'Mata Kuliah', 1)),
+            const SizedBox(width: 48),
+            Expanded(child: _buildNavItem(Icons.description, 'Izin', 2)),
+            Expanded(child: _buildNavItem(Icons.person, 'Profil', 3)),
           ],
         ),
       ),
@@ -753,19 +824,23 @@ class _DashboardScreenState extends State<DashboardScreen> {
       },
       borderRadius: BorderRadius.circular(10),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+        padding: const EdgeInsets.symmetric(horizontal: 2.0),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(icon, color: isActive ? _maroon : Colors.grey, size: 24),
             const SizedBox(height: 4),
-            Text(
-              label,
-              style: TextStyle(
-                color: isActive ? _maroon : Colors.grey,
-                fontSize: 10,
-                fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                label,
+                maxLines: 1,
+                style: TextStyle(
+                  color: isActive ? _maroon : Colors.grey,
+                  fontSize: 10,
+                  fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+                ),
               ),
             ),
             const SizedBox(height: 4),
@@ -780,210 +855,6 @@ class _DashboardScreenState extends State<DashboardScreen> {
           ],
         ),
       ),
-    );
-  }
-
-  void _showIzinModal() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (context) {
-        return Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          padding: EdgeInsets.only(
-            bottom: MediaQuery.of(context).viewInsets.bottom,
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [_maroonDark, _maroon],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: const BorderRadius.vertical(
-                    top: Radius.circular(20),
-                  ),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Row(
-                      children: [
-                        Icon(Icons.post_add, color: Colors.white),
-                        SizedBox(width: 10),
-                        Text(
-                          'Ajukan Izin / Sakit',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                    GestureDetector(
-                      onTap: () => Navigator.pop(context),
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.2),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.close,
-                          color: Colors.white,
-                          size: 20,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(24),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Jenis Izin',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF444444),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    DropdownButtonFormField<String>(
-                      decoration: InputDecoration(
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 14,
-                        ),
-                      ),
-                      value: 'Sakit',
-                      items:
-                          [
-                            'Sakit',
-                            'Izin Keluarga',
-                            'Kegiatan Kampus',
-                            'Lainnya',
-                          ].map((e) {
-                            return DropdownMenuItem(value: e, child: Text(e));
-                          }).toList(),
-                      onChanged: (val) {},
-                    ),
-                    const SizedBox(height: 20),
-                    const Text(
-                      'Mata Kuliah',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF444444),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-
-                    const SizedBox(height: 20),
-                    const Text(
-                      'Tanggal',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF444444),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    TextFormField(
-                      decoration: InputDecoration(
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 14,
-                        ),
-                        hintText: 'Pilih Tanggal',
-                        suffixIcon: const Icon(Icons.calendar_today),
-                      ),
-                      readOnly: true,
-                      onTap: () async {
-                        await showDatePicker(
-                          context: context,
-                          initialDate: DateTime.now(),
-                          firstDate: DateTime(2020),
-                          lastDate: DateTime(2030),
-                        );
-                      },
-                    ),
-                    const SizedBox(height: 20),
-                    const Text(
-                      'Keterangan',
-                      style: TextStyle(
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF444444),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    TextFormField(
-                      maxLines: 3,
-                      decoration: InputDecoration(
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        hintText: 'Jelaskan alasan izin Anda...',
-                        contentPadding: const EdgeInsets.all(14),
-                      ),
-                    ),
-                    const SizedBox(height: 32),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 52,
-                      child: ElevatedButton.icon(
-                        icon: const Icon(Icons.send, color: Colors.white),
-                        label: const Text(
-                          'Kirim Pengajuan',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: _maroon,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          elevation: 2,
-                        ),
-                        onPressed: () {
-                          Navigator.pop(context);
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text(
-                                'Pengajuan izin berhasil dikirim! Menunggu persetujuan dosen.',
-                              ),
-                              backgroundColor: Colors.green,
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        );
-      },
     );
   }
 }

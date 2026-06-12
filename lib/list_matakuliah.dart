@@ -16,7 +16,7 @@ class ListMatakuliahScreen extends StatefulWidget {
 }
 
 class _ListMatakuliahScreenState extends State<ListMatakuliahScreen> {
-  int _currentIndex = 1; // 1 for Mata Kuliah
+  int _currentIndex = 1;
   bool _isLoading = true;
   String? _errorMessage;
   final _session = SessionManager.instance;
@@ -27,283 +27,6 @@ class _ListMatakuliahScreenState extends State<ListMatakuliahScreen> {
 
   List<Map<String, dynamic>> get mkData =>
       _session.matakuliahList.map((mk) => mk.toUiMap()).toList();
-
-  static const List<Map<String, dynamic>> _fallbackMkData = [
-    {
-      'kode': 'MK001',
-      'nama': 'Algoritma & Pemrograman',
-      'kelas': 'TI-A',
-      'sks': 3,
-      'dosen': 'Dr. Rahmad S.',
-      'hari': 'Senin',
-      'jam': '07:30 – 09:10',
-      'ruang': 'Lab K.301',
-      'color': const Color(0xFF800020),
-      'icon': Icons.memory,
-      'hadir': 14,
-      'izin': 1,
-      'alpha': 1,
-      'total': 16,
-      'sessions': [
-        {
-          'n': 1,
-          'tgl': '3 Feb 2026',
-          'topik': 'Pengantar Algoritma',
-          'status': 'hadir',
-        },
-        {
-          'n': 2,
-          'tgl': '10 Feb 2026',
-          'topik': 'Variabel & Tipe Data',
-          'status': 'hadir',
-        },
-        {
-          'n': 3,
-          'tgl': '17 Feb 2026',
-          'topik': 'Percabangan',
-          'status': 'hadir',
-        },
-        {'n': 4, 'tgl': '24 Feb 2026', 'topik': 'Perulangan', 'status': 'izin'},
-        {
-          'n': 5,
-          'tgl': '3 Mar 2026',
-          'topik': 'Fungsi & Prosedur',
-          'status': 'hadir',
-        },
-        {'n': 6, 'tgl': '10 Mar 2026', 'topik': 'Array', 'status': 'hadir'},
-        {'n': 7, 'tgl': '17 Mar 2026', 'topik': 'Sorting', 'status': 'hadir'},
-        {'n': 8, 'tgl': '24 Mar 2026', 'topik': 'UTS', 'status': 'hadir'},
-        {'n': 9, 'tgl': '7 Apr 2026', 'topik': 'Rekursi', 'status': 'hadir'},
-        {'n': 10, 'tgl': '14 Apr 2026', 'topik': 'Pointer', 'status': 'alpha'},
-        {
-          'n': 11,
-          'tgl': '15 Apr 2026',
-          'topik': 'Linked List',
-          'status': 'hadir',
-        },
-      ],
-    },
-    {
-      'kode': 'MK002',
-      'nama': 'Basis Data',
-      'kelas': 'TI-B',
-      'sks': 3,
-      'dosen': 'Dr. Dian M.Kom',
-      'hari': 'Selasa',
-      'jam': '09:30 – 11:10',
-      'ruang': 'R. B.202',
-      'color': const Color(0xFF0D6EFD),
-      'icon': Icons.storage,
-      'hadir': 13,
-      'izin': 2,
-      'alpha': 1,
-      'total': 16,
-      'sessions': [
-        {'n': 1, 'tgl': '4 Feb 2026', 'topik': 'ER Diagram', 'status': 'hadir'},
-        {
-          'n': 2,
-          'tgl': '11 Feb 2026',
-          'topik': 'Normalisasi 1NF',
-          'status': 'hadir',
-        },
-        {
-          'n': 3,
-          'tgl': '18 Feb 2026',
-          'topik': 'Normalisasi 2NF',
-          'status': 'izin',
-        },
-        {'n': 4, 'tgl': '25 Feb 2026', 'topik': 'SQL DDL', 'status': 'hadir'},
-        {'n': 5, 'tgl': '4 Mar 2026', 'topik': 'SQL DML', 'status': 'hadir'},
-        {
-          'n': 6,
-          'tgl': '11 Mar 2026',
-          'topik': 'JOIN Tables',
-          'status': 'hadir',
-        },
-        {'n': 7, 'tgl': '18 Mar 2026', 'topik': 'Subquery', 'status': 'alpha'},
-        {'n': 8, 'tgl': '25 Mar 2026', 'topik': 'UTS', 'status': 'hadir'},
-        {
-          'n': 9,
-          'tgl': '8 Apr 2026',
-          'topik': 'Index & View',
-          'status': 'hadir',
-        },
-        {
-          'n': 10,
-          'tgl': '15 Apr 2026',
-          'topik': 'Stored Procedure',
-          'status': 'izin',
-        },
-      ],
-    },
-    {
-      'kode': 'MK003',
-      'nama': 'Rekayasa Perangkat Lunak',
-      'kelas': 'TI-A',
-      'sks': 3,
-      'dosen': 'Ir. Budi W. M.T',
-      'hari': 'Rabu',
-      'jam': '13:00 – 14:40',
-      'ruang': 'R. C.101',
-      'color': const Color(0xFF198754),
-      'icon': Icons.device_hub,
-      'hadir': 12,
-      'izin': 1,
-      'alpha': 3,
-      'total': 16,
-      'sessions': [
-        {
-          'n': 1,
-          'tgl': '5 Feb 2026',
-          'topik': 'SDLC Overview',
-          'status': 'hadir',
-        },
-        {
-          'n': 2,
-          'tgl': '12 Feb 2026',
-          'topik': 'Requirement Analysis',
-          'status': 'hadir',
-        },
-        {
-          'n': 3,
-          'tgl': '19 Feb 2026',
-          'topik': 'UML Use Case',
-          'status': 'alpha',
-        },
-        {
-          'n': 4,
-          'tgl': '26 Feb 2026',
-          'topik': 'UML Class Diagram',
-          'status': 'hadir',
-        },
-        {
-          'n': 5,
-          'tgl': '5 Mar 2026',
-          'topik': 'Design Pattern',
-          'status': 'hadir',
-        },
-        {'n': 6, 'tgl': '12 Mar 2026', 'topik': 'Testing', 'status': 'alpha'},
-        {
-          'n': 7,
-          'tgl': '19 Mar 2026',
-          'topik': 'Deployment',
-          'status': 'hadir',
-        },
-        {'n': 8, 'tgl': '26 Mar 2026', 'topik': 'UTS', 'status': 'izin'},
-        {
-          'n': 9,
-          'tgl': '9 Apr 2026',
-          'topik': 'Agile Scrum',
-          'status': 'hadir',
-        },
-        {
-          'n': 10,
-          'tgl': '14 Apr 2026',
-          'topik': 'Sprint Planning',
-          'status': 'alpha',
-        },
-      ],
-    },
-    {
-      'kode': 'MK004',
-      'nama': 'Jaringan Komputer',
-      'kelas': 'TI-C',
-      'sks': 3,
-      'dosen': 'Dr. Hana S.T',
-      'hari': 'Kamis',
-      'jam': '15:00 – 16:40',
-      'ruang': 'Lab N.202',
-      'color': const Color(0xFFFD7E14),
-      'icon': Icons.wifi,
-      'hadir': 15,
-      'izin': 0,
-      'alpha': 1,
-      'total': 16,
-      'sessions': [
-        {'n': 1, 'tgl': '6 Feb 2026', 'topik': 'OSI Model', 'status': 'hadir'},
-        {'n': 2, 'tgl': '13 Feb 2026', 'topik': 'TCP/IP', 'status': 'hadir'},
-        {
-          'n': 3,
-          'tgl': '20 Feb 2026',
-          'topik': 'Subnetting',
-          'status': 'hadir',
-        },
-        {'n': 4, 'tgl': '27 Feb 2026', 'topik': 'Routing', 'status': 'hadir'},
-        {'n': 5, 'tgl': '6 Mar 2026', 'topik': 'Switching', 'status': 'hadir'},
-        {
-          'n': 6,
-          'tgl': '13 Mar 2026',
-          'topik': 'Wireless LAN',
-          'status': 'alpha',
-        },
-        {'n': 7, 'tgl': '20 Mar 2026', 'topik': 'Firewall', 'status': 'hadir'},
-        {'n': 8, 'tgl': '27 Mar 2026', 'topik': 'UTS', 'status': 'hadir'},
-      ],
-    },
-    {
-      'kode': 'MK005',
-      'nama': 'Sistem Operasi',
-      'kelas': 'TI-B',
-      'sks': 2,
-      'dosen': 'Dr. Eko P. M.Kom',
-      'hari': 'Jumat',
-      'jam': '08:00 – 09:40',
-      'ruang': 'R. A.303',
-      'color': const Color(0xFF6F42C1),
-      'icon': Icons.dns,
-      'hadir': 10,
-      'izin': 2,
-      'alpha': 4,
-      'total': 16,
-      'sessions': [
-        {'n': 1, 'tgl': '7 Feb 2026', 'topik': 'Intro OS', 'status': 'hadir'},
-        {
-          'n': 2,
-          'tgl': '14 Feb 2026',
-          'topik': 'Process Management',
-          'status': 'hadir',
-        },
-        {'n': 3, 'tgl': '21 Feb 2026', 'topik': 'Threading', 'status': 'alpha'},
-        {
-          'n': 4,
-          'tgl': '28 Feb 2026',
-          'topik': 'Scheduling',
-          'status': 'hadir',
-        },
-        {
-          'n': 5,
-          'tgl': '7 Mar 2026',
-          'topik': 'Memory Management',
-          'status': 'alpha',
-        },
-        {
-          'n': 6,
-          'tgl': '14 Mar 2026',
-          'topik': 'Virtual Memory',
-          'status': 'izin',
-        },
-        {
-          'n': 7,
-          'tgl': '21 Mar 2026',
-          'topik': 'File System',
-          'status': 'hadir',
-        },
-        {'n': 8, 'tgl': '28 Mar 2026', 'topik': 'UTS', 'status': 'izin'},
-        {
-          'n': 9,
-          'tgl': '11 Apr 2026',
-          'topik': 'I/O System',
-          'status': 'hadir',
-        },
-        {
-          'n': 10,
-          'tgl': '14 Apr 2026',
-          'topik': 'Security OS',
-          'status': 'alpha',
-        },
-      ],
-    },
-  ];
 
   @override
   void initState() {
@@ -340,9 +63,7 @@ class _ListMatakuliahScreenState extends State<ListMatakuliahScreen> {
       body: Stack(
         children: [
           SingleChildScrollView(
-            padding: const EdgeInsets.only(
-              bottom: 90,
-            ), // Spacing for bottom nav
+            padding: const EdgeInsets.only(bottom: 90),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -358,19 +79,42 @@ class _ListMatakuliahScreenState extends State<ListMatakuliahScreen> {
                             ),
                           ),
                         )
-                      : Column(
-                          children:
-                              (_errorMessage != null && mkData.isEmpty
-                                      ? _fallbackMkData
-                                      : mkData)
+                      : _errorMessage != null && mkData.isEmpty
+                          ? Center(
+                              child: Padding(
+                                padding: const EdgeInsets.all(32),
+                                child: Column(
+                                  children: [
+                                    Icon(Icons.error_outline,
+                                        size: 48, color: Colors.grey.shade400),
+                                    const SizedBox(height: 12),
+                                    Text(
+                                      _errorMessage!,
+                                      textAlign: TextAlign.center,
+                                      style: TextStyle(color: Colors.grey.shade600),
+                                    ),
+                                    const SizedBox(height: 16),
+                                    ElevatedButton.icon(
+                                      onPressed: _loadMatakuliah,
+                                      icon: const Icon(Icons.refresh),
+                                      label: const Text('Coba Lagi'),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: _maroon,
+                                        foregroundColor: Colors.white,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            )
+                          : Column(
+                              children: mkData
                                   .asMap()
                                   .entries
-                                  .map(
-                                    (entry) =>
-                                        _buildMkCard(entry.value, entry.key),
-                                  )
+                                  .map((entry) =>
+                                      _buildMkCard(entry.value, entry.key))
                                   .toList(),
-                        ),
+                            ),
                 ),
               ],
             ),
@@ -408,7 +152,8 @@ class _ListMatakuliahScreenState extends State<ListMatakuliahScreen> {
               border: Border.all(color: Colors.white, width: 4),
             ),
             child: const Center(
-              child: Icon(Icons.qr_code_scanner, color: Colors.white, size: 30),
+              child:
+                  Icon(Icons.qr_code_scanner, color: Colors.white, size: 30),
             ),
           ),
         ),
@@ -426,20 +171,19 @@ class _ListMatakuliahScreenState extends State<ListMatakuliahScreen> {
       (sum, mk) => sum + ((mk['sks'] ?? 0) as int),
     );
 
+    final totalHadir = mkData.fold<int>(
+      0,
+      (sum, mk) => sum + ((mk['hadir'] ?? 0) as int),
+    );
+
     final totalPertemuan = mkData.fold<int>(
       0,
       (sum, mk) => sum + ((mk['total'] ?? 0) as int),
     );
 
-    final rataKehadiran = totalPertemuan == 0
+    final rataPertemuan = totalMk == 0
         ? 0
-        : ((mkData.fold<int>(
-                        0,
-                        (sum, mk) => sum + ((mk['hadir'] ?? 0) as int),
-                      ) /
-                      totalPertemuan) *
-                  100)
-              .round();
+        : (totalPertemuan / totalMk).round();
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 50, 20, 24),
       decoration: BoxDecoration(
@@ -550,10 +294,18 @@ class _ListMatakuliahScreenState extends State<ListMatakuliahScreen> {
                 ),
                 child: Row(
                   children: [
-                    _buildStatItem('$totalMk', 'Mata Kuliah'),
-                    _buildStatItem('$totalSks', 'SKS Total'),
-                    _buildStatItem('$rataKehadiran%', 'Rata-rata'),
-                    _buildStatItem('$totalPertemuan', 'Pertemuan'),
+                    Expanded(
+                      child: _buildStatItem('$totalMk', 'Mata Kuliah'),
+                    ),
+                    Expanded(
+                      child: _buildStatItem('$totalSks', 'SKS'),
+                    ),
+                    Expanded(
+                      child: _buildStatItem('$totalHadir', 'Total\nKehadiran'),
+                    ),
+                    Expanded(
+                      child: _buildStatItem('$rataPertemuan', 'Rata-rata\nPertemuan'),
+                    ),
                   ],
                 ),
               ),
@@ -565,27 +317,39 @@ class _ListMatakuliahScreenState extends State<ListMatakuliahScreen> {
   }
 
   Widget _buildStatItem(String val, String lbl) {
-    return Column(
-      children: [
-        Text(
-          val,
-          style: const TextStyle(
-            color: Color(0xFFFFD700),
-            fontWeight: FontWeight.bold,
-            fontSize: 18,
-          ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+      child: FittedBox(
+        fit: BoxFit.scaleDown,
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              val,
+              maxLines: 1,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: Color(0xFFFFD700),
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              lbl,
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              softWrap: true,
+              overflow: TextOverflow.ellipsis,
+              style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 10, height: 1.2),
+            ),
+          ],
         ),
-        const SizedBox(height: 4),
-        Text(
-          lbl,
-          style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 10),
-        ),
-      ],
+      ),
     );
   }
 
   Widget _buildMkCard(Map<String, dynamic> mk, int index) {
-    print(mk);
     int hadir = (mk['hadir'] ?? 0) as int;
     int total = (mk['total'] ?? 0) as int;
 
@@ -595,8 +359,8 @@ class _ListMatakuliahScreenState extends State<ListMatakuliahScreen> {
     Color barColor = pct >= 80
         ? const Color(0xFF198754)
         : pct >= 60
-        ? const Color(0xFFFD7E14)
-        : const Color(0xFFDC3545);
+            ? const Color(0xFFFD7E14)
+            : const Color(0xFFDC3545);
     Color mkColor = (mk['color'] as Color?) ?? const Color(0xFF800020);
 
     return Container(
@@ -698,10 +462,9 @@ class _ListMatakuliahScreenState extends State<ListMatakuliahScreen> {
                   spacing: 8,
                   runSpacing: 8,
                   children: [
-                    _buildTag(Icons.workspace_premium, '${mk['sks'] ?? 0} SKS'),
-
+                    _buildTag(
+                        Icons.workspace_premium, '${mk['sks'] ?? 0} SKS'),
                     _buildTag(Icons.people, 'Kelas ${mk['kelas'] ?? '-'}'),
-
                     _buildTag(Icons.location_on, '${mk['ruang'] ?? '-'}'),
                   ],
                 ),
@@ -713,7 +476,8 @@ class _ListMatakuliahScreenState extends State<ListMatakuliahScreen> {
                   vertical: 12,
                 ),
                 decoration: BoxDecoration(
-                  border: Border(top: BorderSide(color: Colors.grey.shade100)),
+                  border:
+                      Border(top: BorderSide(color: Colors.grey.shade100)),
                 ),
                 child: Row(
                   children: [
@@ -806,7 +570,6 @@ class _ListMatakuliahScreenState extends State<ListMatakuliahScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Handle
               Center(
                 child: Container(
                   margin: const EdgeInsets.only(top: 12, bottom: 12),
@@ -824,7 +587,6 @@ class _ListMatakuliahScreenState extends State<ListMatakuliahScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Header Detail
                       Row(
                         children: [
                           Container(
@@ -877,7 +639,6 @@ class _ListMatakuliahScreenState extends State<ListMatakuliahScreen> {
                         ],
                       ),
                       const SizedBox(height: 24),
-                      // Stats Row
                       Row(
                         children: [
                           Expanded(
@@ -923,98 +684,109 @@ class _ListMatakuliahScreenState extends State<ListMatakuliahScreen> {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      // Sessions
-                      ...List.generate(sessions.length, (index) {
-                        var s = sessions[index];
-                        String status = s['status'] as String;
-                        Color statusColor = status == 'hadir'
-                            ? const Color(0xFF198754)
-                            : status == 'izin'
-                            ? const Color(0xFFFD7E14)
-                            : const Color(0xFFDC3545);
-                        String statusLabel = status == 'hadir'
-                            ? 'Hadir'
-                            : status == 'izin'
-                            ? 'Izin'
-                            : 'Alpha';
-
-                        return Container(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          decoration: BoxDecoration(
-                            border: index < sessions.length - 1
-                                ? Border(
-                                    bottom: BorderSide(
-                                      color: Colors.grey.shade100,
-                                    ),
-                                  )
-                                : null,
+                      if (sessions.isEmpty)
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 16),
+                          child: Center(
+                            child: Text(
+                              'Belum ada data pertemuan.',
+                              style: TextStyle(color: Colors.grey, fontSize: 13),
+                            ),
                           ),
-                          child: Row(
-                            children: [
-                              Container(
-                                width: 28,
-                                height: 28,
-                                decoration: BoxDecoration(
-                                  color: statusColor.withOpacity(0.12),
-                                  shape: BoxShape.circle,
+                        )
+                      else
+                        ...List.generate(sessions.length, (index) {
+                          var s = sessions[index];
+                          String status = s['status']?.toString() ?? 'alpha';
+                          Color statusColor = status == 'hadir'
+                              ? const Color(0xFF198754)
+                              : status == 'izin'
+                                  ? const Color(0xFFFD7E14)
+                                  : const Color(0xFFDC3545);
+                          String statusLabel = status == 'hadir'
+                              ? 'Hadir'
+                              : status == 'izin'
+                                  ? 'Izin'
+                                  : 'Alpha';
+
+                          return Container(
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            decoration: BoxDecoration(
+                              border: index < sessions.length - 1
+                                  ? Border(
+                                      bottom: BorderSide(
+                                        color: Colors.grey.shade100,
+                                      ),
+                                    )
+                                  : null,
+                            ),
+                            child: Row(
+                              children: [
+                                Container(
+                                  width: 28,
+                                  height: 28,
+                                  decoration: BoxDecoration(
+                                    color: statusColor.withOpacity(0.12),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      '${s['n'] ?? index + 1}',
+                                      style: TextStyle(
+                                        color: statusColor,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                  ),
                                 ),
-                                child: Center(
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        s['topik']?.toString() ?? '-',
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 13,
+                                          color: Color(0xFF333333),
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        s['tgl']?.toString() ?? '-',
+                                        style: const TextStyle(
+                                          color: Colors.grey,
+                                          fontSize: 11,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: statusColor.withOpacity(0.12),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
                                   child: Text(
-                                    '${s['n']}',
+                                    statusLabel,
                                     style: TextStyle(
                                       color: statusColor,
+                                      fontSize: 11,
                                       fontWeight: FontWeight.bold,
-                                      fontSize: 12,
                                     ),
                                   ),
                                 ),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      s['topik'] as String,
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 13,
-                                        color: Color(0xFF333333),
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      s['tgl'] as String,
-                                      style: const TextStyle(
-                                        color: Colors.grey,
-                                        fontSize: 11,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: statusColor.withOpacity(0.12),
-                                  borderRadius: BorderRadius.circular(20),
-                                ),
-                                child: Text(
-                                  statusLabel,
-                                  style: TextStyle(
-                                    color: statusColor,
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      }),
+                              ],
+                            ),
+                          );
+                        }),
                     ],
                   ),
                 ),
@@ -1058,13 +830,12 @@ class _ListMatakuliahScreenState extends State<ListMatakuliahScreen> {
       child: SizedBox(
         height: 65,
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
-            _buildNavItem(Icons.home, 'Beranda', 0),
-            _buildNavItem(Icons.menu_book, 'Mata Kuliah', 1),
-            const SizedBox(width: 48), // Space for FAB
-            _buildNavItem(Icons.description, 'Izin', 2),
-            _buildNavItem(Icons.person, 'Profil', 3),
+            Expanded(child: _buildNavItem(Icons.home, 'Beranda', 0)),
+            Expanded(child: _buildNavItem(Icons.menu_book, 'Mata Kuliah', 1)),
+            const SizedBox(width: 48),
+            Expanded(child: _buildNavItem(Icons.description, 'Izin', 2)),
+            Expanded(child: _buildNavItem(Icons.person, 'Profil', 3)),
           ],
         ),
       ),
@@ -1098,19 +869,23 @@ class _ListMatakuliahScreenState extends State<ListMatakuliahScreen> {
       },
       borderRadius: BorderRadius.circular(10),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+        padding: const EdgeInsets.symmetric(horizontal: 2.0),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(icon, color: isActive ? _maroon : Colors.grey, size: 24),
             const SizedBox(height: 4),
-            Text(
-              label,
-              style: TextStyle(
-                color: isActive ? _maroon : Colors.grey,
-                fontSize: 10,
-                fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                label,
+                maxLines: 1,
+                style: TextStyle(
+                  color: isActive ? _maroon : Colors.grey,
+                  fontSize: 10,
+                  fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+                ),
               ),
             ),
             const SizedBox(height: 4),

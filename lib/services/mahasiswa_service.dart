@@ -21,22 +21,30 @@ class MahasiswaService {
     await _api.init();
 
     UserSession? user;
-    final dashboard = await _api.get(ApiConfig.mahasiswaDashboard);
-    if (_api.isSuccessfulGet(dashboard)) {
-      user = HtmlParser.parseUserFromHtml(
-        dashboard.data?.toString() ?? '',
-        fallback: UserSession(nama: 'Mahasiswa', nim: nimFallback ?? '-'),
-      );
-    }
 
-    if (user != null) {
+    // Try dashboard JSON API first
+    try {
+      final dashboard = await _api.get(ApiConfig.mahasiswaDashboardApi);
+      if (_api.isSuccessfulGet(dashboard)) {
+        final data = dashboard.data;
+        if (data is Map<String, dynamic>) {
+          final userJson = data['mahasiswa'] as Map<String, dynamic>?;
+          if (userJson != null) {
+            user = UserSession.fromJson(userJson);
+          }
+        }
+      }
+    } catch (_) {}
+
+    // Fallback: try profile JSON API
+    if (user == null) {
       try {
-        final profile = await _api.get(ApiConfig.mahasiswaProfile);
+        final profile = await _api.get(ApiConfig.mahasiswaProfileApi);
         if (_api.isSuccessfulGet(profile)) {
-          user = HtmlParser.parseUserFromHtml(
-            profile.data?.toString() ?? '',
-            fallback: user,
-          );
+          final data = profile.data;
+          if (data is Map<String, dynamic>) {
+            user = UserSession.fromJson(data);
+          }
         }
       } catch (_) {}
     }

@@ -41,7 +41,7 @@ class _ProfilScreenState extends State<ProfilScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      _buildInformasiAkademik(),
+                      _buildInformasiPribadi(),
                       const SizedBox(height: 16),
                       _buildKehadiranSemesterIni(),
                       const SizedBox(height: 16),
@@ -87,7 +87,8 @@ class _ProfilScreenState extends State<ProfilScreen> {
               border: Border.all(color: Colors.white, width: 4),
             ),
             child: const Center(
-              child: Icon(Icons.qr_code_scanner, color: Colors.white, size: 30),
+              child:
+                  Icon(Icons.qr_code_scanner, color: Colors.white, size: 30),
             ),
           ),
         ),
@@ -230,7 +231,8 @@ class _ProfilScreenState extends State<ProfilScreen> {
                       width: 1.5,
                     ),
                   ),
-                  child: const Icon(Icons.edit, color: Colors.white, size: 18),
+                  child:
+                      const Icon(Icons.edit, color: Colors.white, size: 18),
                 ),
               ),
             ],
@@ -241,6 +243,7 @@ class _ProfilScreenState extends State<ProfilScreen> {
   }
 
   Widget _buildSummaryStrip() {
+    final user = _session.user;
     return Container(
       color: Colors.white,
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
@@ -249,27 +252,27 @@ class _ProfilScreenState extends State<ProfilScreen> {
         child: Row(
           children: [
             _buildSummaryPill(
-              '${(_session.user?.kehadiranPersen ?? 0).round()}%',
+              '${(user?.kehadiranPersen ?? 0).round()}%',
               'Kehadiran',
               _maroon,
             ),
             _buildSummaryPill(
-              '${_session.user?.totalHadir ?? 0}',
+              '${user?.totalHadir ?? 0}',
               'Hadir',
               const Color(0xFF198754),
             ),
             _buildSummaryPill(
-              '${_session.user?.totalIzin ?? 0}',
+              '${user?.totalIzin ?? 0}',
               'Izin',
               const Color(0xFFFD7E14),
             ),
             _buildSummaryPill(
-              '${_session.user?.totalAlpha ?? 0}',
+              '${user?.totalAlpha ?? 0}',
               'Alpha',
               const Color(0xFFDC3545),
             ),
             _buildSummaryPill(
-              '${_session.user?.totalSks ?? 0}',
+              '${user?.totalSks ?? 0}',
               'SKS',
               const Color(0xFF0D6EFD),
             ),
@@ -397,6 +400,7 @@ class _ProfilScreenState extends State<ProfilScreen> {
   }
 
   Widget _buildInformasiPribadi() {
+    final user = _session.user;
     return _buildSectionCard(
       icon: Icons.person,
       title: 'Informasi Pribadi',
@@ -404,81 +408,27 @@ class _ProfilScreenState extends State<ProfilScreen> {
         children: [
           _buildInfoRow(
             'Nama Lengkap',
-            _buildTextValue(_session.user?.nama ?? '-'),
-          ),
-          _buildInfoRow('NIM', _buildTextValue(_session.user?.nim ?? '-')),
-          _buildInfoRow('Email', _buildTextValue('andi@student.ac.id')),
-          _buildInfoRow('No. HP', _buildTextValue('08111111111')),
-          _buildInfoRow('Tanggal Lahir', _buildTextValue('15 Maret 2004')),
-          _buildInfoRow('Jenis Kelamin', _buildTextValue('Laki-laki')),
-          _buildInfoRow('Angkatan', _buildTextValue('2022')),
-          _buildInfoRow(
-            'Alamat',
-            _buildTextValue('Jl. Sudirman No. 45, Bandung'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInformasiAkademik() {
-    return _buildSectionCard(
-      icon: Icons.school,
-      title: 'Informasi Akademik',
-      child: Column(
-        children: [
-          _buildInfoRow('Program Studi', _buildTextValue('Teknik Informatika')),
-          _buildInfoRow('Semester', _buildTextValue('6')),
-          _buildInfoRow(
-            'Status Mahasiswa',
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 4,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xFF198754),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: const Text(
-                  'Aktif',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
+            _buildTextValue(user?.nama ?? '-'),
           ),
           _buildInfoRow(
-            'IPK',
-            _buildTextValue(
-              '3.75',
-              color: _maroon,
-              fontWeight: FontWeight.bold,
-            ),
+            'NIM',
+            _buildTextValue(user?.nim ?? '-'),
           ),
-          _buildInfoRow('Total SKS Tempuh', _buildTextValue('98 SKS')),
+          _buildInfoRow(
+            'Program Studi',
+            _buildTextValue(user?.prodi ?? '-'),
+          ),
+          _buildInfoRow(
+            'Email',
+            _buildTextValue(user?.email ?? '-'),
+          ),
         ],
       ),
     );
   }
 
   Widget _buildKehadiranSemesterIni() {
-    final mkList = [
-      {'nama': 'Algoritma & Pemrograman', 'pct': 93, 'color': _maroon},
-      {'nama': 'Basis Data', 'pct': 87, 'color': const Color(0xFF0D6EFD)},
-      {'nama': 'RPL', 'pct': 80, 'color': const Color(0xFF198754)},
-      {
-        'nama': 'Jaringan Komputer',
-        'pct': 75,
-        'color': const Color(0xFFFD7E14),
-      },
-      {'nama': 'Sistem Operasi', 'pct': 90, 'color': const Color(0xFF6F42C1)},
-    ];
+    final mkList = _session.matakuliahList;
 
     return _buildSectionCard(
       icon: Icons.bar_chart,
@@ -495,7 +445,7 @@ class _ProfilScreenState extends State<ProfilScreen> {
                   fit: StackFit.expand,
                   children: [
                     CircularProgressIndicator(
-                      value: 0.87,
+                      value: (_session.user?.kehadiranPersen ?? 0) / 100,
                       strokeWidth: 8,
                       backgroundColor: Colors.grey.shade200,
                       color: _maroon,
@@ -506,7 +456,7 @@ class _ProfilScreenState extends State<ProfilScreen> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            '87%',
+                            '${(_session.user?.kehadiranPersen ?? 0).round()}%',
                             style: TextStyle(
                               color: _maroon,
                               fontWeight: FontWeight.bold,
@@ -515,7 +465,8 @@ class _ProfilScreenState extends State<ProfilScreen> {
                           ),
                           const Text(
                             'Hadir',
-                            style: TextStyle(color: Colors.grey, fontSize: 10),
+                            style:
+                                TextStyle(color: Colors.grey, fontSize: 10),
                           ),
                         ],
                       ),
@@ -533,27 +484,37 @@ class _ProfilScreenState extends State<ProfilScreen> {
                       style: TextStyle(color: Colors.grey, fontSize: 12),
                     ),
                     const SizedBox(height: 4),
-                    const Text(
-                      '87%',
-                      style: TextStyle(
+                    Text(
+                      '${(_session.user?.kehadiranPersen ?? 0).round()}%',
+                      style: const TextStyle(
                         color: Color(0xFF1A1A2E),
                         fontWeight: FontWeight.bold,
                         fontSize: 24,
                       ),
                     ),
                     const SizedBox(height: 4),
-                    const Text(
-                      '13 / 16 pertemuan hadir',
-                      style: TextStyle(color: Colors.grey, fontSize: 11),
+                    Text(
+                      '${_session.user?.totalHadir ?? 0} / ${_session.user?.totalHadir ?? 0 + (_session.user?.totalIzin ?? 0) + (_session.user?.totalAlpha ?? 0)} pertemuan hadir',
+                      style:
+                          const TextStyle(color: Colors.grey, fontSize: 11),
                     ),
                     const SizedBox(height: 8),
                     Wrap(
                       spacing: 8,
                       runSpacing: 4,
                       children: [
-                        _buildStatBadge('Hadir: 13', const Color(0xFF198754)),
-                        _buildStatBadge('Izin: 1', const Color(0xFFFD7E14)),
-                        _buildStatBadge('Alpha: 2', const Color(0xFFDC3545)),
+                        _buildStatBadge(
+                          'Hadir: ${_session.user?.totalHadir ?? 0}',
+                          const Color(0xFF198754),
+                        ),
+                        _buildStatBadge(
+                          'Izin: ${_session.user?.totalIzin ?? 0}',
+                          const Color(0xFFFD7E14),
+                        ),
+                        _buildStatBadge(
+                          'Alpha: ${_session.user?.totalAlpha ?? 0}',
+                          const Color(0xFFDC3545),
+                        ),
                       ],
                     ),
                   ],
@@ -561,52 +522,57 @@ class _ProfilScreenState extends State<ProfilScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 16),
-          Divider(height: 1, color: Colors.grey[200]),
-          const SizedBox(height: 16),
-          ...mkList.map((mk) {
-            String nama = mk['nama'] as String;
-            int pctInt = mk['pct'] as int;
-            double pct = pctInt / 100.0;
-            Color color = mk['color'] as Color;
+          if (mkList.isNotEmpty) ...[
+            const SizedBox(height: 16),
+            Divider(height: 1, color: Colors.grey[200]),
+            const SizedBox(height: 16),
+            ...mkList.map((mk) {
+              final ui = mk.toUiMap();
+              final nama = ui['nama'] as String;
+              final hadir = (ui['hadir'] as int);
+              final total = (ui['total'] as int);
+              final pctInt = total == 0 ? 0 : ((hadir / total) * 100).round();
+              final pct = total == 0 ? 0.0 : hadir / total;
+              final color = ui['color'] as Color;
 
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: Column(
-                children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        nama,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                          fontSize: 12,
-                          color: Color(0xFF333333),
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          nama,
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w600,
+                            fontSize: 12,
+                            color: Color(0xFF333333),
+                          ),
                         ),
-                      ),
-                      Text(
-                        '$pctInt%',
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 12,
-                          color: color,
+                        Text(
+                          '$pctInt%',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                            color: color,
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  LinearProgressIndicator(
-                    value: pct,
-                    backgroundColor: Colors.grey.shade200,
-                    color: color,
-                    minHeight: 7,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ],
-              ),
-            );
-          }).toList(),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    LinearProgressIndicator(
+                      value: pct,
+                      backgroundColor: Colors.grey.shade200,
+                      color: color,
+                      minHeight: 7,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ],
+                ),
+              );
+            }).toList(),
+          ],
         ],
       ),
     );
@@ -645,7 +611,8 @@ class _ProfilScreenState extends State<ProfilScreen> {
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(20),
               ),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             ),
           ),
         ],
@@ -709,13 +676,9 @@ class _ProfilScreenState extends State<ProfilScreen> {
             ElevatedButton(
               onPressed: () async {
                 final navigator = Navigator.of(context);
-
-                navigator.pop(); // tutup dialog
-
+                navigator.pop();
                 await AuthService.instance.logout();
-
                 if (!mounted) return;
-
                 navigator.pushAndRemoveUntil(
                   MaterialPageRoute(builder: (_) => const LoginScreen()),
                   (route) => false,
@@ -863,6 +826,7 @@ class _ProfilScreenState extends State<ProfilScreen> {
   }
 
   void _showEditProfileModal() {
+    final user = _session.user;
     showDialog(
       context: context,
       builder: (context) {
@@ -882,7 +846,8 @@ class _ProfilScreenState extends State<ProfilScreen> {
                     vertical: 16,
                   ),
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(colors: [_maroonDark, _maroon]),
+                    gradient:
+                        LinearGradient(colors: [_maroonDark, _maroon]),
                     borderRadius: const BorderRadius.vertical(
                       top: Radius.circular(16),
                     ),
@@ -920,16 +885,24 @@ class _ProfilScreenState extends State<ProfilScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildTextField('Nama Lengkap', 'Andi Pratama'),
-                      const SizedBox(height: 12),
-                      _buildTextField('Email', 'andi@student.ac.id'),
-                      const SizedBox(height: 12),
-                      _buildTextField('No. HP', '08111111111'),
+                      _buildTextField(
+                        'Nama Lengkap',
+                        user?.nama ?? '-',
+                      ),
                       const SizedBox(height: 12),
                       _buildTextField(
-                        'Alamat',
-                        'Jl. Sudirman No. 45, Bandung',
-                        maxLines: 3,
+                        'Email',
+                        user?.email ?? '-',
+                      ),
+                      const SizedBox(height: 12),
+                      _buildTextField(
+                        'NIM',
+                        user?.nim ?? '-',
+                      ),
+                      const SizedBox(height: 12),
+                      _buildTextField(
+                        'Program Studi',
+                        user?.prodi ?? '-',
                       ),
                     ],
                   ),
@@ -952,7 +925,8 @@ class _ProfilScreenState extends State<ProfilScreen> {
                           Navigator.pop(context);
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                              content: Text('Profil berhasil diperbarui!'),
+                              content:
+                                  Text('Profil berhasil diperbarui!'),
                               backgroundColor: Colors.green,
                               behavior: SnackBarBehavior.floating,
                             ),
@@ -1006,7 +980,8 @@ class _ProfilScreenState extends State<ProfilScreen> {
                     vertical: 16,
                   ),
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(colors: [_maroonDark, _maroon]),
+                    gradient:
+                        LinearGradient(colors: [_maroonDark, _maroon]),
                     borderRadius: const BorderRadius.vertical(
                       top: Radius.circular(16),
                     ),
@@ -1016,7 +991,11 @@ class _ProfilScreenState extends State<ProfilScreen> {
                     children: [
                       const Row(
                         children: [
-                          Icon(Icons.vpn_key, color: Colors.white, size: 20),
+                          Icon(
+                            Icons.vpn_key,
+                            color: Colors.white,
+                            size: 20,
+                          ),
                           SizedBox(width: 8),
                           Text(
                             'Ganti Password',
@@ -1044,12 +1023,20 @@ class _ProfilScreenState extends State<ProfilScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _buildTextField('Password Lama', '', isPassword: true),
-                      const SizedBox(height: 12),
-                      _buildTextField('Password Baru', '', isPassword: true),
+                      _buildTextField(
+                        'Password Lama',
+                        '••••••••',
+                        isPassword: true,
+                      ),
                       const SizedBox(height: 12),
                       _buildTextField(
-                        'Konfirmasi Password',
+                        'Password Baru',
+                        '',
+                        isPassword: true,
+                      ),
+                      const SizedBox(height: 12),
+                      _buildTextField(
+                        'Konfirmasi Password Baru',
                         '',
                         isPassword: true,
                       ),
@@ -1074,7 +1061,8 @@ class _ProfilScreenState extends State<ProfilScreen> {
                           Navigator.pop(context);
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
-                              content: Text('Password berhasil diubah!'),
+                              content: Text(
+                                  'Password berhasil diperbarui!'),
                               backgroundColor: Colors.green,
                               behavior: SnackBarBehavior.floating,
                             ),
@@ -1088,7 +1076,7 @@ class _ProfilScreenState extends State<ProfilScreen> {
                         ),
                         child: const Row(
                           children: [
-                            Icon(Icons.security, size: 16, color: Colors.white),
+                            Icon(Icons.save, size: 16, color: Colors.white),
                             SizedBox(width: 4),
                             Text(
                               'Simpan',

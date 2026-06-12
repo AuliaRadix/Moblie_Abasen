@@ -1,8 +1,8 @@
 import 'api_config.dart';
 import 'api_service.dart';
-import 'html_parser.dart';
 import 'mahasiswa_service.dart';
 import 'session_manager.dart';
+import '../models/user_session.dart';
 
 class AuthException implements Exception {
   final String message;
@@ -89,8 +89,7 @@ class AuthService {
   Future<bool> tryRestoreSession() async {
     try {
       await _api.init();
-      final response = await _api.get(ApiConfig.mahasiswaDashboard);
-      final html = response.data?.toString() ?? '';
+      final response = await _api.get(ApiConfig.mahasiswaDashboardApi);
 
       if (response.statusCode == 302) {
         final location = response.headers.value('location') ?? '';
@@ -98,13 +97,20 @@ class AuthService {
       }
 
       if (!_api.isSuccessfulGet(response)) return false;
-      if (html.contains('login') && html.contains('password')) return false;
 
-      final user = HtmlParser.parseUserFromHtml(html);
-      _session.setUser(user);
-      _session.isLoggedIn = true;
-      await MahasiswaService.instance.loadMatakuliah();
-      return true;
+      final data = response.data;
+      if (data is Map<String, dynamic>) {
+        final userJson = data['mahasiswa'] as Map<String, dynamic>?;
+        if (userJson != null) {
+          final user = UserSession.fromJson(userJson);
+          _session.setUser(user);
+          _session.isLoggedIn = true;
+          await MahasiswaService.instance.loadMatakuliah();
+          return true;
+        }
+      }
+
+      return false;
     } catch (_) {
       return false;
     }
