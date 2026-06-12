@@ -50,15 +50,32 @@ class MahasiswaService {
 
   Future<List<Matakuliah>> loadMatakuliah() async {
     await _api.init();
-    final response = await _api.get(ApiConfig.mahasiswaMatakuliah);
-    final html = response.data?.toString() ?? '';
+
+    final response = await _api.get(ApiConfig.mahasiswaMatakuliahApi);
+
+    print("MATKUL STATUS => ${response.statusCode}");
+    print("MATKUL DATA => ${response.data}");
 
     if (!_api.isSuccessfulGet(response)) {
       throw Exception('Gagal memuat daftar mata kuliah.');
     }
 
-    final list = HtmlParser.parseMatakuliahList(html);
+    final data = response.data;
+
+    List<dynamic> jsonList;
+
+    if (data is String) {
+      jsonList = jsonDecode(data);
+    } else {
+      jsonList = data as List<dynamic>;
+    }
+
+    final list = jsonList.map((e) => Matakuliah.fromJson(e)).toList();
+    for (final mk in list) {
+      print("MODEL => ${mk.nama}");
+    }
     _session.setMatakuliah(list);
+
     return list;
   }
 
@@ -274,8 +291,6 @@ class MahasiswaService {
       return null;
     }
   }
-
-
 
   bool _isValidAbsenPage(int? statusCode, String body) {
     if (statusCode != 200) return false;

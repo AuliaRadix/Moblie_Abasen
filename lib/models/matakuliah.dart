@@ -30,7 +30,27 @@ class Matakuliah {
     this.total = 0,
     this.sessions = const [],
   });
-
+  factory Matakuliah.fromJson(Map<String, dynamic> json) {
+    return Matakuliah(
+      kode: json['kode'] ?? '',
+      nama: json['nama'] ?? json['kode'] ?? '',
+      kelas: json['kelas'] ?? '-',
+      sks: int.tryParse('${json['sks'] ?? 0}') ?? 0,
+      dosen: json['dosen'] ?? '-',
+      hari: json['hari'] ?? '-',
+      jam: json['jam'] ?? '-',
+      ruang: json['ruang'] ?? '-',
+      hadir: json['hadir'] ?? 0,
+      izin: json['izin'] ?? 0,
+      alpha: json['alpha'] ?? 0,
+      total: json['total'] ?? 0,
+      sessions:
+          (json['sessions'] as List?)
+              ?.map((e) => Map<String, dynamic>.from(e))
+              .toList() ??
+          [],
+    );
+  }
   Color get color {
     final hash = kode.hashCode.abs();
     final colors = [

@@ -419,6 +419,27 @@ class _ListMatakuliahScreenState extends State<ListMatakuliahScreen> {
   }
 
   Widget _buildTopHeader() {
+    final totalMk = mkData.length;
+
+    final totalSks = mkData.fold<int>(
+      0,
+      (sum, mk) => sum + ((mk['sks'] ?? 0) as int),
+    );
+
+    final totalPertemuan = mkData.fold<int>(
+      0,
+      (sum, mk) => sum + ((mk['total'] ?? 0) as int),
+    );
+
+    final rataKehadiran = totalPertemuan == 0
+        ? 0
+        : ((mkData.fold<int>(
+                        0,
+                        (sum, mk) => sum + ((mk['hadir'] ?? 0) as int),
+                      ) /
+                      totalPertemuan) *
+                  100)
+              .round();
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 50, 20, 24),
       decoration: BoxDecoration(
@@ -506,8 +527,8 @@ class _ListMatakuliahScreenState extends State<ListMatakuliahScreen> {
                       color: Colors.white.withOpacity(0.15),
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child: const Text(
-                      '5 MK',
+                    child: Text(
+                      '${mkData.length} MK',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 12,
@@ -529,10 +550,10 @@ class _ListMatakuliahScreenState extends State<ListMatakuliahScreen> {
                 ),
                 child: Row(
                   children: [
-                    Expanded(child: _buildStatItem('5', 'Mata Kuliah')),
-                    Expanded(child: _buildStatItem('14', 'SKS Total')),
-                    Expanded(child: _buildStatItem('87%', 'Rata-rata')),
-                    Expanded(child: _buildStatItem('16', 'Pertemuan')),
+                    _buildStatItem('$totalMk', 'Mata Kuliah'),
+                    _buildStatItem('$totalSks', 'SKS Total'),
+                    _buildStatItem('$rataKehadiran%', 'Rata-rata'),
+                    _buildStatItem('$totalPertemuan', 'Pertemuan'),
                   ],
                 ),
               ),
@@ -576,7 +597,7 @@ class _ListMatakuliahScreenState extends State<ListMatakuliahScreen> {
         : pct >= 60
         ? const Color(0xFFFD7E14)
         : const Color(0xFFDC3545);
-    Color mkColor = mk['color'] as Color;
+    Color mkColor = (mk['color'] as Color?) ?? const Color(0xFF800020);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -619,7 +640,7 @@ class _ListMatakuliahScreenState extends State<ListMatakuliahScreen> {
                         borderRadius: BorderRadius.circular(11),
                       ),
                       child: Icon(
-                        mk['icon'] as IconData,
+                        (mk['icon'] as IconData?) ?? Icons.menu_book,
                         color: mkColor,
                         size: 24,
                       ),
@@ -677,13 +698,11 @@ class _ListMatakuliahScreenState extends State<ListMatakuliahScreen> {
                   spacing: 8,
                   runSpacing: 8,
                   children: [
-                    _buildTag(Icons.workspace_premium, '${mk['sks']} SKS'),
-                    _buildTag(
-                      Icons.calendar_today,
-                      '${mk['hari']}, ${mk['jam']}',
-                    ),
-                    _buildTag(Icons.location_on, mk['ruang'] as String),
-                    _buildTag(Icons.people, 'Kelas ${mk['kelas']}'),
+                    _buildTag(Icons.workspace_premium, '${mk['sks'] ?? 0} SKS'),
+
+                    _buildTag(Icons.people, 'Kelas ${mk['kelas'] ?? '-'}'),
+
+                    _buildTag(Icons.location_on, '${mk['ruang'] ?? '-'}'),
                   ],
                 ),
               ),
@@ -772,7 +791,7 @@ class _ListMatakuliahScreenState extends State<ListMatakuliahScreen> {
 
   void _showDetailModal(Map<String, dynamic> mk, int pct, Color barColor) {
     Color mkColor = mk['color'] as Color;
-
+    final sessions = (mk['sessions'] ?? []) as List;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -905,10 +924,8 @@ class _ListMatakuliahScreenState extends State<ListMatakuliahScreen> {
                       ),
                       const SizedBox(height: 12),
                       // Sessions
-                      ...List.generate((mk['sessions'] as List).length, (
-                        index,
-                      ) {
-                        var s = mk['sessions'][index];
+                      ...List.generate(sessions.length, (index) {
+                        var s = sessions[index];
                         String status = s['status'] as String;
                         Color statusColor = status == 'hadir'
                             ? const Color(0xFF198754)
@@ -924,7 +941,7 @@ class _ListMatakuliahScreenState extends State<ListMatakuliahScreen> {
                         return Container(
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           decoration: BoxDecoration(
-                            border: index < (mk['sessions'] as List).length - 1
+                            border: index < sessions.length - 1
                                 ? Border(
                                     bottom: BorderSide(
                                       color: Colors.grey.shade100,

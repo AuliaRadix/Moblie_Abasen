@@ -20,6 +20,8 @@ class AuthService {
   final _session = SessionManager.instance;
 
   Future<void> login(String username, String password) async {
+    await _api.clearSession(); // tambahkan ini
+
     await _api.init();
     await _api.refreshCsrf();
 
@@ -33,6 +35,23 @@ class AuthService {
         'remember': 'on',
       },
     );
+    print("============== LOGIN DEBUG ==============");
+    print("STATUS   : ${response.statusCode}");
+    print("LOCATION : ${response.headers.value('location')}");
+    print("REAL URI : ${response.realUri}");
+    print("BODY     :");
+    print(response.data);
+    print("=========================================");
+    print("COOKIES =>");
+    final cookies = await _api.cookieJar.loadForRequest(
+      Uri.parse(ApiConfig.baseUrl),
+    );
+    for (final c in cookies) {
+      print("${c.name} = ${c.value}");
+    }
+    print("LOGIN STATUS => ${response.statusCode}");
+    print("LOGIN LOCATION => ${response.headers.value('location')}");
+    print("LOGIN DATA => ${response.data}");
 
     if (_api.isRedirectToDosen(response)) {
       await _api.clearSession();
@@ -41,7 +60,8 @@ class AuthService {
       );
     }
 
-    final isLoginSuccess = _api.isRedirectToMahasiswa(response) ||
+    final isLoginSuccess =
+        _api.isRedirectToMahasiswa(response) ||
         response.statusCode == 302 ||
         (response.statusCode == 200 &&
             !(response.data?.toString() ?? '').contains('These credentials'));
@@ -50,9 +70,7 @@ class AuthService {
       throw const AuthException('Username atau password salah. Coba lagi.');
     }
 
-    await MahasiswaService.instance.loadSessionData(
-      nimFallback: username,
-    );
+    await MahasiswaService.instance.loadSessionData(nimFallback: username);
     _session.isLoggedIn = true;
   }
 

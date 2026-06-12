@@ -16,7 +16,7 @@ class ApiConfig {
   static const String mahasiswaScanQr = '/mahasiswa/scan_qr';
   static String mahasiswaScanToken(String token) => '/mahasiswa/scan/$token';
   static const String mahasiswaScanProcess = '/mahasiswa/scan/process';
-
+static const String mahasiswaMatakuliahApi = '/mahasiswa/list_matakuliah/api';
   // PresensiController (jika route /absen terdaftar di web.php)
   static const String absenForm = '/absen';
   static const String absenStore = '/absen';

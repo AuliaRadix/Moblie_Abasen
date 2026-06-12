@@ -16,7 +16,7 @@ class ApiService {
   bool _initialized = false;
 
   Dio get dio => _dio;
-
+  CookieJar get cookieJar => _cookieJar;
   Future<void> init() async {
     if (_initialized) return;
 
@@ -47,7 +47,16 @@ class ApiService {
     await init();
     final response = await _dio.get(path, queryParameters: queryParameters);
     final html = response.data?.toString() ?? '';
-    csrfToken = HtmlParser.extractCsrfToken(html) ?? csrfToken;
+
+    print("GET LOGIN STATUS => ${response.statusCode}");
+
+    final token = HtmlParser.extractCsrfToken(html);
+
+    print("TOKEN PARSED => $token");
+
+    csrfToken = token ?? csrfToken;
+
+    print("TOKEN FINAL => $csrfToken");
   }
 
   Future<Response<dynamic>> get(
@@ -56,6 +65,18 @@ class ApiService {
     bool followRedirects = false,
   }) async {
     await init();
+
+    final cookies = await _cookieJar.loadForRequest(
+      Uri.parse("${ApiConfig.baseUrl}$path"),
+    );
+
+    print("GET URL => ${ApiConfig.baseUrl}$path");
+    print("COOKIES SENT =>");
+
+    for (final c in cookies) {
+      print("${c.name}=${c.value}");
+    }
+
     return _dio.get(
       path,
       queryParameters: queryParameters,
@@ -100,7 +121,23 @@ class ApiService {
 
   Future<void> clearSession() async {
     await init();
+
+    print("CLEARING COOKIES");
+
+    final cookiesBefore = await _cookieJar.loadForRequest(
+      Uri.parse(ApiConfig.baseUrl),
+    );
+
+    print("BEFORE DELETE => ${cookiesBefore.length}");
+
     await _cookieJar.deleteAll();
+
+    final cookiesAfter = await _cookieJar.loadForRequest(
+      Uri.parse(ApiConfig.baseUrl),
+    );
+
+    print("AFTER DELETE => ${cookiesAfter.length}");
+
     csrfToken = null;
   }
 

@@ -8,6 +8,7 @@ import 'scan_qr.dart';
 import 'izin.dart';
 import 'services/session_manager.dart';
 import 'services/fixed_fab.dart';
+import 'services/api_service.dart';
 
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
@@ -36,27 +37,17 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Future<void> loadDashboard() async {
     try {
-      final url = '${ApiConfig.baseUrl}/mahasiswa/dashboard/api';
-
-      final response = await http.get(
-        Uri.parse(url),
-        headers: ApiConfig.defaultHeaders,
+      final response = await ApiService.instance.get(
+        '/mahasiswa/dashboard/api',
       );
 
-      print('STATUS => ${response.statusCode}');
-      print('BODY => ${response.body}');
+      if (!mounted) return;
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-
-        setState(() {
-          dashboardData = data;
-        });
-
-        print("DATA => $dashboardData");
-      }
+      setState(() {
+        dashboardData = response.data;
+      });
     } catch (e) {
-      print('ERROR => $e');
+      print(e);
     }
   }
 
@@ -302,7 +293,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          '26 / 30 pertemuan hadir',
+                          '${dashboardData?['hadirCount'] ?? 0} / ${dashboardData?['totalPresensis'] ?? 0} pertemuan hadir',
                           style: TextStyle(
                             color: Colors.white.withOpacity(0.7),
                             fontSize: 12,

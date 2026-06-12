@@ -74,6 +74,7 @@ class _LoginScreenState extends State<LoginScreen> {
     final password = _passwordController.text;
 
     try {
+      
       await AuthService.instance.login(username, password);
 
       if (!mounted) return;
