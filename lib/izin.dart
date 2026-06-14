@@ -7,6 +7,8 @@ import 'services/fixed_fab.dart';
 import 'services/session_manager.dart';
 import 'services/api_service.dart';
 import 'services/api_config.dart';
+import 'services/auth_service.dart';
+import 'main.dart';
 import 'models/izin.dart';
 import 'models/matakuliah.dart';
 
@@ -1187,41 +1189,70 @@ class _IzinScreenState extends State<IzinScreen> {
                                    );
                                    return;
                                  }
-                                 try {
-                                   final response = await _api.post(
-                                     ApiConfig.mahasiswaIzinApi,
-                                     data: {
-                                       'kode_matakuliah': selectedMkId,
-                                       'jenis': selectedJenis,
-                                       'tanggal':
-                                           '${selectedDate.year}-${selectedDate.month.toString().padLeft(2, '0')}-${selectedDate.day.toString().padLeft(2, '0')}',
-                                       'keterangan': ketController.text,
-                                     },
-                                   );
-                                   if (!context.mounted) return;
-                                   final statusCode = response.statusCode ?? 0;
-                                   if (statusCode == 200 ||
-                                       statusCode == 201 ||
-                                       statusCode == 302) {
-                                     Navigator.pop(context);
-                                     _loadIzin();
-                                     if (!mounted) return;
-                                     ScaffoldMessenger.of(context).showSnackBar(
-                                       const SnackBar(
-                                         content: Text(
-                                             'Pengajuan izin berhasil dikirim!'),
-                                         backgroundColor: Colors.green,
-                                       ),
-                                     );
-                                   } else if (statusCode == 419) {
-                                     ScaffoldMessenger.of(context).showSnackBar(
-                                       const SnackBar(
-                                         content: Text(
-                                             'Sesi telah berakhir. Silakan login ulang.'),
-                                         backgroundColor: Colors.red,
-                                       ),
-                                     );
-                                   } else if (statusCode == 422) {
+                                try {
+                                  // Refresh CSRF token from an HTML page (Dashboard)
+                                  // because /mahasiswa/izin/api returns JSON,
+                                  // not HTML, so extractCsrfToken fails on it.
+                                  await _api.refreshCsrf(
+                                    path: ApiConfig.mahasiswaDashboard,
+                                  );
+
+                                  final response = await _api.post(
+                                    ApiConfig.mahasiswaIzinApi,
+                                    data: {
+                                      'kode_matakuliah': selectedMkId,
+                                      'jenis': selectedJenis,
+                                      'tanggal':
+                                          '${selectedDate.year}-${selectedDate.month.toString().padLeft(2, '0')}-${selectedDate.day.toString().padLeft(2, '0')}',
+                                      'keterangan': ketController.text,
+                                    },
+                                  );
+                                  if (!context.mounted) return;
+                                  final statusCode = response.statusCode ?? 0;
+
+                                  // Detect redirect to login (session expired)
+                                  if (_api.isRedirectToLogin(response)) {
+                                    if (!context.mounted) return;
+                                    Navigator.pop(context);
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                            'Sesi telah berakhir. Silakan login ulang.'),
+                                        backgroundColor: Colors.red,
+                                      ),
+                                    );
+                                    // Force logout
+                                    await AuthService.instance.logout();
+                                    if (!context.mounted) return;
+                                    Navigator.pushAndRemoveUntil(
+                                      context,
+                                      MaterialPageRoute(builder: (_) => const LoginScreen()),
+                                      (route) => false,
+                                    );
+                                    return;
+                                  }
+
+                                  if (statusCode == 200 ||
+                                      statusCode == 201) {
+                                    Navigator.pop(context);
+                                    _loadIzin();
+                                    if (!mounted) return;
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                            'Pengajuan izin berhasil dikirim!'),
+                                        backgroundColor: Colors.green,
+                                      ),
+                                    );
+                                  } else if (statusCode == 419) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text(
+                                            'Sesi telah berakhir. Silakan login ulang.'),
+                                        backgroundColor: Colors.red,
+                                      ),
+                                    );
+                                  } else if (statusCode == 422) {
                                      String errorMsg = 'Validasi gagal.';
                                      if (response.data is Map) {
                                        final errors =

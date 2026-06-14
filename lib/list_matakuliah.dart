@@ -251,13 +251,7 @@ class _ListMatakuliahScreenState extends State<ListMatakuliahScreen> {
                               fontSize: 18,
                             ),
                           ),
-                          Text(
-                            'Semester Genap 2025/2026',
-                            style: TextStyle(
-                              color: Colors.white.withOpacity(0.7),
-                              fontSize: 12,
-                            ),
-                          ),
+                      
                         ],
                       ),
                     ],
@@ -317,14 +311,15 @@ class _ListMatakuliahScreenState extends State<ListMatakuliahScreen> {
   }
 
   Widget _buildStatItem(String val, String lbl) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-      child: FittedBox(
-        fit: BoxFit.scaleDown,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
+    // Equal-height stat cards by constraining height and centering text
+    return SizedBox(
+      height: 64,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
               val,
               maxLines: 1,
               textAlign: TextAlign.center,
@@ -334,17 +329,26 @@ class _ListMatakuliahScreenState extends State<ListMatakuliahScreen> {
                 fontSize: 18,
               ),
             ),
-            const SizedBox(height: 6),
-            Text(
-              lbl,
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              softWrap: true,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 10, height: 1.2),
+          ),
+          const SizedBox(height: 6),
+          Flexible(
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                lbl,
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                softWrap: true,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: Colors.white.withOpacity(0.7),
+                  fontSize: 10,
+                  height: 1.2,
+                ),
+              ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

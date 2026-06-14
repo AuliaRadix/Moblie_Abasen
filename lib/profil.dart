@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'services/auth_service.dart';
+import 'services/api_config.dart';
+import 'services/api_service.dart';
 import 'dashboard.dart';
 import 'list_matakuliah.dart';
 import 'scan_qr.dart';
@@ -19,9 +21,36 @@ class _ProfilScreenState extends State<ProfilScreen> {
   int _currentIndex = 3;
   final _session = SessionManager.instance;
 
+  Map<String, dynamic>? _dashboardData;
+  bool _isLoadingDashboard = true;
+
   final Color _maroon = const Color(0xFF800020);
   final Color _maroonDark = const Color(0xFF5A0016);
   final Color _maroonLight = const Color(0xFFC0003A);
+
+  @override
+  void initState() {
+    super.initState();
+    _loadDashboardData();
+  }
+
+  Future<void> _loadDashboardData() async {
+    try {
+      final response = await ApiService.instance.get(
+        ApiConfig.mahasiswaDashboardApi,
+      );
+      if (!mounted) return;
+      setState(() {
+        _dashboardData = response.data;
+        _isLoadingDashboard = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _isLoadingDashboard = false;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -45,7 +74,7 @@ class _ProfilScreenState extends State<ProfilScreen> {
                       const SizedBox(height: 16),
                       _buildKehadiranSemesterIni(),
                       const SizedBox(height: 16),
-                      _buildKeamananAkun(),
+                      _buildMenuCepat(),
                       const SizedBox(height: 16),
                       _buildKeluarAkun(),
                     ],
@@ -243,7 +272,6 @@ class _ProfilScreenState extends State<ProfilScreen> {
   }
 
   Widget _buildSummaryStrip() {
-    final user = _session.user;
     return Container(
       color: Colors.white,
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
@@ -252,27 +280,27 @@ class _ProfilScreenState extends State<ProfilScreen> {
         child: Row(
           children: [
             _buildSummaryPill(
-              '${(user?.kehadiranPersen ?? 0).round()}%',
+              '${((_dashboardData?['attendancePercentage'] ?? 0) as num).round()}%',
               'Kehadiran',
               _maroon,
             ),
             _buildSummaryPill(
-              '${user?.totalHadir ?? 0}',
+              '${_dashboardData?['hadirCount'] ?? 0}',
               'Hadir',
               const Color(0xFF198754),
             ),
             _buildSummaryPill(
-              '${user?.totalIzin ?? 0}',
+              '${_dashboardData?['izinCount'] ?? 0}',
               'Izin',
               const Color(0xFFFD7E14),
             ),
             _buildSummaryPill(
-              '${user?.totalAlpha ?? 0}',
+              '${_dashboardData?['absenCount'] ?? 0}',
               'Alpha',
               const Color(0xFFDC3545),
             ),
             _buildSummaryPill(
-              '${user?.totalSks ?? 0}',
+              '${_session.user?.totalSks ?? 0}',
               'SKS',
               const Color(0xFF0D6EFD),
             ),
@@ -429,6 +457,12 @@ class _ProfilScreenState extends State<ProfilScreen> {
 
   Widget _buildKehadiranSemesterIni() {
     final mkList = _session.matakuliahList;
+    final attendancePct =
+        ((_dashboardData?['attendancePercentage'] ?? 0) as num).round();
+    final hadirCount = (_dashboardData?['hadirCount'] ?? 0) as int;
+    final izinCount = (_dashboardData?['izinCount'] ?? 0) as int;
+    final alphaCount = (_dashboardData?['absenCount'] ?? 0) as int;
+    final totalPresensi = (_dashboardData?['totalPresensis'] ?? 0) as int;
 
     return _buildSectionCard(
       icon: Icons.bar_chart,
@@ -445,7 +479,9 @@ class _ProfilScreenState extends State<ProfilScreen> {
                   fit: StackFit.expand,
                   children: [
                     CircularProgressIndicator(
-                      value: (_session.user?.kehadiranPersen ?? 0) / 100,
+                      value: ((_dashboardData?['attendancePercentage'] ?? 0)
+                              as num) /
+                          100,
                       strokeWidth: 8,
                       backgroundColor: Colors.grey.shade200,
                       color: _maroon,
@@ -456,7 +492,7 @@ class _ProfilScreenState extends State<ProfilScreen> {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            '${(_session.user?.kehadiranPersen ?? 0).round()}%',
+                            '$attendancePct%',
                             style: TextStyle(
                               color: _maroon,
                               fontWeight: FontWeight.bold,
@@ -485,7 +521,7 @@ class _ProfilScreenState extends State<ProfilScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '${(_session.user?.kehadiranPersen ?? 0).round()}%',
+                      '$attendancePct%',
                       style: const TextStyle(
                         color: Color(0xFF1A1A2E),
                         fontWeight: FontWeight.bold,
@@ -494,7 +530,7 @@ class _ProfilScreenState extends State<ProfilScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '${_session.user?.totalHadir ?? 0} / ${_session.user?.totalHadir ?? 0 + (_session.user?.totalIzin ?? 0) + (_session.user?.totalAlpha ?? 0)} pertemuan hadir',
+                      '$hadirCount / $totalPresensi pertemuan hadir',
                       style:
                           const TextStyle(color: Colors.grey, fontSize: 11),
                     ),
@@ -504,15 +540,15 @@ class _ProfilScreenState extends State<ProfilScreen> {
                       runSpacing: 4,
                       children: [
                         _buildStatBadge(
-                          'Hadir: ${_session.user?.totalHadir ?? 0}',
+                          'Hadir: $hadirCount',
                           const Color(0xFF198754),
                         ),
                         _buildStatBadge(
-                          'Izin: ${_session.user?.totalIzin ?? 0}',
+                          'Izin: $izinCount',
                           const Color(0xFFFD7E14),
                         ),
                         _buildStatBadge(
-                          'Alpha: ${_session.user?.totalAlpha ?? 0}',
+                          'Alpha: $alphaCount',
                           const Color(0xFFDC3545),
                         ),
                       ],
@@ -589,33 +625,108 @@ class _ProfilScreenState extends State<ProfilScreen> {
     );
   }
 
-  Widget _buildKeamananAkun() {
+  Widget _buildMenuCepat() {
     return _buildSectionCard(
-      icon: Icons.security,
-      title: 'Keamanan Akun',
+      icon: Icons.widgets,
+      title: 'Menu Cepat',
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Kelola keamanan dan kata sandi akun Anda.',
-            style: TextStyle(color: Colors.grey, fontSize: 12),
+          _buildMenuItem(
+            icon: Icons.qr_code_scanner,
+            label: 'Scan QR',
+            subtitle: 'Pindai kode QR presensi',
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => const ScanQrScreen()),
+              );
+            },
+            isLast: false,
           ),
-          const SizedBox(height: 12),
-          OutlinedButton.icon(
-            onPressed: _showChangePasswordModal,
-            icon: const Icon(Icons.vpn_key, size: 16),
-            label: const Text('Ganti Password'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: Colors.grey.shade700,
-              side: BorderSide(color: Colors.grey.shade400),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(20),
-              ),
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            ),
+          _buildMenuItem(
+            icon: Icons.description,
+            label: 'Izin',
+            subtitle: 'Ajukan dan lihat riwayat izin',
+            onTap: () {
+              Navigator.pushReplacement(
+                context,
+                PageRouteBuilder(
+                  pageBuilder: (_, __, ___) => const IzinScreen(),
+                  transitionDuration: Duration.zero,
+                ),
+              );
+            },
+            isLast: true,
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildMenuItem({
+    required IconData icon,
+    required String label,
+    required String subtitle,
+    required VoidCallback onTap,
+    required bool isLast,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          border: isLast
+              ? null
+              : Border(bottom: BorderSide(color: Colors.grey.shade100)),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: _maroon.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(11),
+              ),
+              child: Icon(icon, color: _maroon, size: 22),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 13,
+                      color: Color(0xFF1A1A2E),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: Colors.grey.shade600,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Flexible(
+              child: Icon(
+                Icons.chevron_right,
+                size: 20,
+                color: Colors.grey.shade400,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -8,6 +8,7 @@ class UserSession {
   final int? totalIzin;
   final int? totalAlpha;
   final int? totalSks;
+  final int? totalPertemuan;
 
   const UserSession({
     required this.nama,
@@ -19,6 +20,7 @@ class UserSession {
     this.totalIzin,
     this.totalAlpha,
     this.totalSks,
+    this.totalPertemuan,
   });
 
   String get initials {
@@ -45,6 +47,7 @@ class UserSession {
     int? totalIzin,
     int? totalAlpha,
     int? totalSks,
+    int? totalPertemuan,
   }) {
     return UserSession(
       nama: nama ?? this.nama,
@@ -56,6 +59,7 @@ class UserSession {
       totalIzin: totalIzin ?? this.totalIzin,
       totalAlpha: totalAlpha ?? this.totalAlpha,
       totalSks: totalSks ?? this.totalSks,
+      totalPertemuan: totalPertemuan ?? this.totalPertemuan,
     );
   }
 
@@ -80,6 +84,9 @@ class UserSession {
       totalSks: json['total_sks'] is int
           ? json['total_sks']
           : int.tryParse('${json['total_sks'] ?? 0}'),
+      totalPertemuan: json['total_pertemuan'] is int
+          ? json['total_pertemuan']
+          : int.tryParse('${json['total_pertemuan'] ?? json['totalPresensis']?.toString() ?? '0'}'),
     );
   }
 
@@ -94,6 +101,7 @@ class UserSession {
       'total_izin': totalIzin,
       'total_alpha': totalAlpha,
       'total_sks': totalSks,
+      'total_pertemuan': totalPertemuan,
     };
   }
 }

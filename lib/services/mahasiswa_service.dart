@@ -30,7 +30,25 @@ class MahasiswaService {
         if (data is Map<String, dynamic>) {
           final userJson = data['mahasiswa'] as Map<String, dynamic>?;
           if (userJson != null) {
-            user = UserSession.fromJson(userJson);
+            // Merge top-level attendance fields from dashboard API
+            // into the userJson so UserSession.fromJson sees them.
+            // Dashboard API returns: attendancePercentage, hadirCount,
+            // izinCount, absenCount, totalPresensis at the top level.
+            final merged = Map<String, dynamic>.from(userJson);
+            void mergeIfAbsent(String srcKey, String dstKey) {
+              if (!merged.containsKey(dstKey) && data.containsKey(srcKey)) {
+                merged[dstKey] = data[srcKey];
+              }
+            }
+            mergeIfAbsent('attendancePercentage', 'kehadiran');
+            mergeIfAbsent('hadirCount', 'total_hadir');
+            mergeIfAbsent('izinCount', 'total_izin');
+            mergeIfAbsent('absenCount', 'total_alpha');
+            mergeIfAbsent('totalPresensis', 'total_pertemuan');
+            if (!merged.containsKey('totalSks') && data.containsKey('totalSks')) {
+              merged['total_sks'] = data['totalSks'];
+            }
+            user = UserSession.fromJson(merged);
           }
         }
       }
@@ -44,6 +62,23 @@ class MahasiswaService {
           final data = profile.data;
           if (data is Map<String, dynamic>) {
             user = UserSession.fromJson(data);
+          }
+        }
+      } catch (_) {}
+    }
+
+    // Always try to fetch prodi & email from the Profile API
+    // (Laravel returns: 'prodi' => $mahasiswaProfile?->jurusan, 'email' => $mahasiswaProfile?->email)
+    if (user != null && (user.prodi == null || user.email == null)) {
+      try {
+        final profile = await _api.get(ApiConfig.mahasiswaProfileApi);
+        if (_api.isSuccessfulGet(profile)) {
+          final profileData = profile.data;
+          if (profileData is Map<String, dynamic>) {
+            user = user.copyWith(
+              prodi: user.prodi ?? profileData['prodi']?.toString(),
+              email: user.email ?? profileData['email']?.toString(),
+            );
           }
         }
       } catch (_) {}
